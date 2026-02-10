@@ -20,6 +20,7 @@ export interface IUser extends Document {
   provider?: string;
   googleId?: string;
   githubId?: string;
+  facebookId?: string;
   image?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -72,13 +73,16 @@ const UserSchema = new Schema<IUser>(
     },
     provider: {
       type: String,
-      enum: ["credentials", "google", "github"],
+      enum: ["credentials", "google", "github", "facebook"],
       default: "credentials",
     },
     googleId: {
       type: String,
     },
     githubId: {
+      type: String,
+    },
+    facebookId: {
       type: String,
     },
     image: {

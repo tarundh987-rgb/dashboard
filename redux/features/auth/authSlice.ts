@@ -116,6 +116,21 @@ export const githubLogin = createAsyncThunk<
   },
 );
 
+export const facebookLogin = createAsyncThunk<
+  { data: any; message: string },
+  { code: string },
+  { rejectValue: ApiError }
+>("auth/facebookLogin", async ({ code }, { rejectWithValue }) => {
+  try {
+    const res = await axios.post("/api/auth/facebook", { code });
+    return res.data;
+  } catch (error: any) {
+    return rejectWithValue({
+      message: error.response?.data?.message || "Facebook login failed.",
+    });
+  }
+});
+
 const authSlice = createSlice({
   name: "auth",
   initialState,
@@ -199,6 +214,18 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(githubLogin.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload?.message ?? null;
+      })
+      .addCase(facebookLogin.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(facebookLogin.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload.data;
+      })
+      .addCase(facebookLogin.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload?.message ?? null;
       });
