@@ -19,6 +19,7 @@ export interface IUser extends Document {
   resetPasswordExpiry?: Date;
   provider?: string;
   googleId?: string;
+  githubId?: string;
   image?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -71,10 +72,13 @@ const UserSchema = new Schema<IUser>(
     },
     provider: {
       type: String,
-      enum: ["credentials", "google"],
+      enum: ["credentials", "google", "github"],
       default: "credentials",
     },
     googleId: {
+      type: String,
+    },
+    githubId: {
       type: String,
     },
     image: {

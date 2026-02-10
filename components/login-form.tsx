@@ -23,6 +23,7 @@ import { SerializedError } from "@reduxjs/toolkit";
 import { setUser } from "@/redux/features/auth/authSlice";
 import { useAppDispatch } from "@/redux/hooks";
 import GoogleLoginBtn from "./GoogleLoginBtn";
+import GitHubLoginBtn from "./GitHubLoginBtn";
 
 type LoginFormState = {
   email: string;
@@ -158,12 +159,14 @@ export function LoginForm({
                 Or continue with
               </FieldSeparator>
 
-              <Field className="flex justify-center items-center w-full">
+              <div className="flex flex-col gap-3">
                 <GoogleLoginBtn />
-              </Field>
+                <GitHubLoginBtn />
+              </div>
 
               <FieldDescription className="text-center">
-                Don&apos;t have an account? <Link href="/sign-up">Sign up</Link>
+                Don&apos;t have an account?{" "}
+                <Link href="/auth/sign-up">Sign up</Link>
               </FieldDescription>
             </FieldGroup>
           </form>

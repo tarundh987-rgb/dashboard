@@ -36,14 +36,15 @@ export default async function proxy(req: NextRequest) {
   }
 
   const isPublicPage =
-    pathname.startsWith("/sign-in") || pathname.startsWith("/sign-up");
+    pathname.startsWith("/auth/sign-in") ||
+    pathname.startsWith("/auth/sign-up");
 
   if (user && isPublicPage) {
     return NextResponse.redirect(new URL("/", req.url));
   }
 
   if (!user && pathname.startsWith("/settings")) {
-    return NextResponse.redirect(new URL("/sign-in", req.url));
+    return NextResponse.redirect(new URL("/auth/sign-in", req.url));
   }
 
   if (user) {

@@ -27,7 +27,7 @@ export default function UserDropdown() {
 
   if (!user) {
     return (
-      <Link href="/sign-in">
+      <Link href="/auth/sign-in">
         <Button className="cursor-pointer hover:bg-primary/80">Sign In</Button>
       </Link>
     );

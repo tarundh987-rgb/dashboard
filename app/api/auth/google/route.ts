@@ -29,7 +29,7 @@ export const POST = withApiHandler(async (req: NextRequest) => {
 
   let user = await User.findOne({ email });
 
-  if (user && user.provider === "credential") {
+  if (user && user.provider === "credentials") {
     throw new ApiError(409, "This email is registered with email & password.");
   }
 

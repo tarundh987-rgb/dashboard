@@ -22,6 +22,11 @@ interface GoogleLoginResponse {
   message: string;
 }
 
+interface GithubLoginResponse {
+  data: any;
+  message: string;
+}
+
 const initialState: AuthState = {
   isLoading: false,
   user: null,
@@ -89,6 +94,27 @@ export const googleLogin = createAsyncThunk<
     });
   }
 });
+
+export const githubLogin = createAsyncThunk<
+  GithubLoginResponse,
+  { code: string },
+  { rejectValue: ApiError }
+>(
+  "auth/githubLogin",
+  async ({ code }: { code: string }, { rejectWithValue }) => {
+    try {
+      const res = await axios.post("/api/auth/github", { code });
+
+      const data = await res.data;
+
+      return data;
+    } catch (error: any) {
+      return rejectWithValue({
+        message: error.response?.data?.message || "Github login failed.",
+      });
+    }
+  },
+);
 
 const authSlice = createSlice({
   name: "auth",
@@ -160,6 +186,19 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(googleLogin.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload?.message ?? null;
+      })
+      .addCase(githubLogin.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(githubLogin.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload.data;
+        state.error = null;
+      })
+      .addCase(githubLogin.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload?.message ?? null;
       });
