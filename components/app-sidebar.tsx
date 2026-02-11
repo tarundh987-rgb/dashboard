@@ -12,6 +12,8 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import Link from "next/link";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
 
 const nav = {
   title: "Home",
@@ -34,9 +36,20 @@ const nav = {
     },
   ],
 };
+const adminNav = {
+  title: "Admin",
+  items: [
+    {
+      title: "Create User",
+      url: "/create-user",
+    },
+  ],
+};
 
 export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
+
+  const user = useSelector((state: RootState) => state.auth.user);
 
   return (
     <Sidebar
@@ -61,6 +74,21 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
                 </SidebarMenuItem>
               );
             })}
+            {user?.role === "ADMIN" &&
+              adminNav.items.map((item) => {
+                const isActive =
+                  item.url === "/"
+                    ? pathname === "/"
+                    : pathname.startsWith(item.url);
+
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild isActive={isActive}>
+                      <Link href={item.url}>{item.title}</Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>

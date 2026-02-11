@@ -1,11 +1,13 @@
 import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "./features/auth/authSlice";
+import adminReducer from "./features/admin/adminSlice";
 import { authApi } from "./features/auth/authApi";
 import { adminApi } from "./features/admin/adminApi";
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
+    admin: adminReducer,
     [authApi.reducerPath]: authApi.reducer,
     [adminApi.reducerPath]: adminApi.reducer,
   },

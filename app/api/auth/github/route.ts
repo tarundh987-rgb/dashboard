@@ -71,7 +71,13 @@ export const POST = withApiHandler(async (req: NextRequest) => {
     });
   }
 
-  const token = signToken({ id: user._id });
+  const createdUser = await User.findOne({ primaryEmail });
+
+  if (!createdUser) {
+    throw new ApiError(400, "User not created. Try again ...");
+  }
+
+  const token = signToken({ id: createdUser._id, role: createdUser.role });
 
   const response = apiSuccess(
     200,

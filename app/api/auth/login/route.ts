@@ -37,6 +37,7 @@ export const POST = withApiHandler(async (req: NextRequest) => {
 
   const token = signToken({
     id: user._id,
+    role: user.role,
   });
 
   const loginedUser = {

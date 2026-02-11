@@ -12,7 +12,7 @@ export default async function proxy(req: NextRequest) {
 
   const token = req.cookies.get("auth_token")?.value;
 
-  let user: { id: string; jti: string } | null = null;
+  let user: { id: string; jti: string; role: string } | null = null;
 
   if (token) {
     try {
@@ -28,6 +28,7 @@ export default async function proxy(req: NextRequest) {
         user = {
           id: decoded.id,
           jti: decoded.jti,
+          role: decoded.role,
         };
       }
     } catch {
@@ -45,6 +46,10 @@ export default async function proxy(req: NextRequest) {
 
   if (!user && pathname.startsWith("/settings")) {
     return NextResponse.redirect(new URL("/auth/sign-in", req.url));
+  }
+
+  if (user && user.role !== "ADMIN" && pathname.startsWith("/create-user")) {
+    return NextResponse.redirect(new URL("/", req.url));
   }
 
   if (user) {
