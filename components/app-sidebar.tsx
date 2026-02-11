@@ -7,6 +7,7 @@ import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
+  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -27,10 +28,6 @@ const nav = {
       url: "/analytics",
     },
     {
-      title: "Users",
-      url: "/users",
-    },
-    {
       title: "Settings",
       url: "/settings",
     },
@@ -42,6 +39,10 @@ const adminNav = {
     {
       title: "Create User",
       url: "/create-user",
+    },
+    {
+      title: "Manage Users",
+      url: "/admin-users",
     },
   ],
 };
@@ -59,6 +60,8 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
     >
       <SidebarContent>
         <SidebarGroup>
+          <SidebarGroupLabel>{nav.title}</SidebarGroupLabel>
+
           <SidebarMenu>
             {nav.items.map((item) => {
               const isActive =
@@ -74,22 +77,31 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
                 </SidebarMenuItem>
               );
             })}
-            {user?.role === "ADMIN" &&
-              adminNav.items.map((item) => {
-                const isActive =
-                  item.url === "/"
-                    ? pathname === "/"
-                    : pathname.startsWith(item.url);
-
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={isActive}>
-                      <Link href={item.url}>{item.title}</Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
           </SidebarMenu>
+
+          {user?.role === "ADMIN" && (
+            <>
+              <SidebarGroupLabel className="mt-3">
+                {adminNav.title}
+              </SidebarGroupLabel>
+              <SidebarMenu>
+                {adminNav.items.map((item) => {
+                  const isActive =
+                    item.url === "/"
+                      ? pathname === "/"
+                      : pathname.startsWith(item.url);
+
+                  return (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild isActive={isActive}>
+                        <Link href={item.url}>{item.title}</Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </>
+          )}
         </SidebarGroup>
       </SidebarContent>
     </Sidebar>

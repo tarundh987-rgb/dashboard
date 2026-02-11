@@ -22,6 +22,7 @@ export interface IUser extends Document {
   githubId?: string;
   facebookId?: string;
   image?: string;
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -87,6 +88,10 @@ const UserSchema = new Schema<IUser>(
     },
     image: {
       type: String,
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
     },
   },
   {

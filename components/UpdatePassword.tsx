@@ -1,20 +1,15 @@
-import { FetchBaseQueryError } from "@reduxjs/toolkit/query/react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import { useUpdatePasswordMutation } from "@/redux/features/auth/authApi";
+import { updatePassword } from "@/redux/features/auth/authSlice";
 import React, { useState } from "react";
 import { updatePasswordSchema } from "@/verification/auth.verification";
 import { toast } from "sonner";
-import { SerializedError } from "@reduxjs/toolkit";
-import { RootState } from "@/redux/store";
-
-function isFetchBaseQueryError(error: unknown): error is FetchBaseQueryError {
-  return typeof error === "object" && error !== null && "status" in error;
-}
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 
 export default function UpdatePassword() {
-  const [updatePassword, { isLoading }] = useUpdatePasswordMutation();
+  const dispatch = useAppDispatch();
+  const isLoading = useAppSelector((state) => state.auth.isLoading);
 
   const [errors, setErrors] = useState<Record<string, string[]>>({});
 
@@ -35,23 +30,15 @@ export default function UpdatePassword() {
     }
 
     try {
-      await updatePassword(formData).unwrap();
+      await dispatch(updatePassword(formData)).unwrap();
 
       toast.success("Password updated successfully.");
       setFormData({
         currentPassword: "",
         newPassword: "",
       });
-    } catch (err) {
-      let message = "Update failed.";
-
-      if (isFetchBaseQueryError(err)) {
-        message = (err.data as any)?.message || message;
-      } else if (typeof err === "object" && err && "message" in err) {
-        message = (err as SerializedError).message ?? message;
-      }
-
-      toast.error(message);
+    } catch (err: any) {
+      toast.error(err?.message || "Update failed.");
     }
   };
 

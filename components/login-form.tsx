@@ -16,12 +16,10 @@ import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { useLoginMutation } from "@/redux/features/auth/authApi";
+import { login } from "@/redux/features/auth/authSlice";
 import { loginSchema } from "@/verification/auth.verification";
-import type { FetchBaseQueryError } from "@reduxjs/toolkit/query/react";
-import { SerializedError } from "@reduxjs/toolkit";
 import { setUser } from "@/redux/features/auth/authSlice";
-import { useAppDispatch } from "@/redux/hooks";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import GoogleLoginBtn from "./GoogleLoginBtn";
 import GitHubLoginBtn from "./GitHubLoginBtn";
 import FacebookLoginBtn from "./FacebookLoginButton";
@@ -31,17 +29,13 @@ type LoginFormState = {
   password: string;
 };
 
-function isFetchBaseQueryError(error: unknown): error is FetchBaseQueryError {
-  return typeof error === "object" && error !== null && "status" in error;
-}
-
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
   const router = useRouter();
-  const [loginApi, { isLoading }] = useLoginMutation();
   const dispatch = useAppDispatch();
+  const isLoading = useAppSelector((state) => state.auth.isLoading);
 
   const [formData, setFormData] = useState<LoginFormState>({
     email: "",
@@ -67,20 +61,12 @@ export function LoginForm({
     }
 
     try {
-      const res = await loginApi(result.data).unwrap();
+      const res = await dispatch(login(result.data)).unwrap();
       toast.success("Logged in successfully.");
-      dispatch(setUser(res.data));
+      dispatch(setUser(res.data || res));
       router.push("/");
-    } catch (err: unknown) {
-      let message = "Login failed.";
-
-      if (isFetchBaseQueryError(err)) {
-        message = (err.data as any)?.message || message;
-      } else if (typeof err === "object" && err && "message" in err) {
-        message = (err as SerializedError).message ?? message;
-      }
-
-      toast.error(message);
+    } catch (err: any) {
+      toast.error(err?.message || "Login failed.");
     }
   };
 

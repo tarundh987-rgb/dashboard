@@ -17,20 +17,15 @@ import { Textarea } from "./ui/textarea";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
-import { useUpdateMutation } from "@/redux/features/auth/authApi";
+import { updateUser } from "@/redux/features/auth/authSlice";
 import { setUser } from "@/redux/features/auth/authSlice";
 import { toast } from "sonner";
-import { SerializedError } from "@reduxjs/toolkit";
 import { updateSchema } from "@/verification/auth.verification";
-import { FetchBaseQueryError } from "@reduxjs/toolkit/query/react";
-
-function isFetchBaseQueryError(error: unknown): error is FetchBaseQueryError {
-  return typeof error === "object" && error !== null && "status" in error;
-}
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 
 export default function Profile() {
-  const dispatch = useDispatch();
-  const [updateUser, { isLoading }] = useUpdateMutation();
+  const dispatch = useAppDispatch();
+  const isLoading = useAppSelector((state) => state.auth.isLoading);
   const user = useSelector((state: RootState) => state.auth.user);
   const [errors, setErrors] = useState<Record<string, string[]>>({});
 
@@ -73,20 +68,11 @@ export default function Profile() {
     }
 
     try {
-      const res = await updateUser(payload).unwrap();
-
+      const res = await dispatch(updateUser(payload)).unwrap();
       dispatch(setUser(res.data));
       toast.success("User updated successfully.");
-    } catch (err) {
-      let message = "Update failed.";
-
-      if (isFetchBaseQueryError(err)) {
-        message = (err.data as any)?.message || message;
-      } else if (typeof err === "object" && err && "message" in err) {
-        message = (err as SerializedError).message ?? message;
-      }
-
-      toast.error(message);
+    } catch (err: any) {
+      toast.error(err?.message || "Update failed.");
     }
   };
 

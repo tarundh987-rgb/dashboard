@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppDispatch } from "@/redux/hooks";
-import { githubLogin } from "@/redux/features/auth/authSlice";
+import { githubLogin, setUser } from "@/redux/features/auth/authSlice";
 import { toast } from "sonner";
 
 export default function GitHubCallback() {
@@ -21,7 +21,13 @@ export default function GitHubCallback() {
 
     dispatch(githubLogin({ code }))
       .unwrap()
-      .then(() => {
+      .then((response) => {
+        // Extract user data from response
+        const userData = response.data || response;
+        
+        // Dispatch setUser to store user data
+        dispatch(setUser(userData));
+        
         toast.success("Logged in successfully");
         router.push("/");
       })

@@ -14,16 +14,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LogOut } from "lucide-react";
-import { useLogoutMutation } from "@/redux/features/auth/authApi";
 import { toast } from "sonner";
-import { FetchBaseQueryError } from "@reduxjs/toolkit/query/react";
-import { clearUser } from "@/redux/features/auth/authSlice";
-import { formatDate } from "@/utils/ageCalculator";
+import { clearUser, logout } from "@/redux/features/auth/authSlice";
+import { useAppDispatch } from "@/redux/hooks";
 
 export default function UserDropdown() {
   const user = useSelector((state: RootState) => state.auth.user);
-  const dispatch = useDispatch();
-  const [logoutApi, { isLoading }] = useLogoutMutation();
+  const isLoading = useSelector((state: RootState) => state.auth.isLoading);
+  const dispatch = useAppDispatch();
 
   if (!user) {
     return (
@@ -35,16 +33,11 @@ export default function UserDropdown() {
 
   const handleLogout = async () => {
     try {
-      await logoutApi().unwrap();
+      await dispatch(logout()).unwrap();
       dispatch(clearUser());
       toast.success("Logged out successfully.");
-    } catch (err) {
-      const error = err as FetchBaseQueryError & {
-        data?: {
-          message?: string;
-        };
-      };
-      toast.error(error?.data?.message || "Logout failed.");
+    } catch (err: any) {
+      toast.error(err?.message || "Logout failed.");
     }
   };
 
@@ -87,13 +80,6 @@ export default function UserDropdown() {
         <DropdownMenuItem asChild>
           <span className="font-semibold">
             Role: <span className="font-normal">{user?.role}</span>
-          </span>
-        </DropdownMenuItem>
-
-        <DropdownMenuItem asChild>
-          <span className="font-semibold">
-            DOB:{" "}
-            <span className="font-normal">{formatDate(user?.dateOfBirth)}</span>
           </span>
         </DropdownMenuItem>
 

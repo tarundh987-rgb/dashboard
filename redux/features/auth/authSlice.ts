@@ -7,6 +7,7 @@ interface AuthState {
   resetToken: string | null;
   error: string | null;
   successMessage: string | null;
+  users?: any[];
 }
 
 interface forgotPassword {
@@ -131,6 +132,106 @@ export const facebookLogin = createAsyncThunk<
   }
 });
 
+export const register = createAsyncThunk<any, any, { rejectValue: ApiError }>(
+  "auth/register",
+  async (data, { rejectWithValue }) => {
+    try {
+      const res = await axios.post("/api/auth/register", data);
+      return res.data;
+    } catch (err: any) {
+      return rejectWithValue({
+        message: err.response?.data?.message || "Registration failed",
+      });
+    }
+  },
+);
+
+export const login = createAsyncThunk<any, any, { rejectValue: ApiError }>(
+  "auth/login",
+  async (data, { rejectWithValue }) => {
+    try {
+      const res = await axios.post("/api/auth/login", data);
+      return res.data;
+    } catch (err: any) {
+      return rejectWithValue({
+        message: err.response?.data?.message || "Login failed",
+      });
+    }
+  },
+);
+
+export const me = createAsyncThunk<any, void, { rejectValue: ApiError }>(
+  "auth/me",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await axios.get("/api/auth/me");
+      return res.data;
+    } catch (err: any) {
+      return rejectWithValue({
+        message: err.response?.data?.message || "Failed to fetch user",
+      });
+    }
+  },
+);
+
+export const logout = createAsyncThunk<any, void, { rejectValue: ApiError }>(
+  "auth/logout",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await axios.post("/api/auth/logout");
+      return res.data;
+    } catch (err: any) {
+      return rejectWithValue({
+        message: err.response?.data?.message || "Logout failed",
+      });
+    }
+  },
+);
+
+export const updateUser = createAsyncThunk<any, any, { rejectValue: ApiError }>(
+  "auth/updateUser",
+  async (data, { rejectWithValue }) => {
+    try {
+      const res = await axios.patch("/api/auth/update", data);
+      return res.data;
+    } catch (err: any) {
+      return rejectWithValue({
+        message: err.response?.data?.message || "Update failed",
+      });
+    }
+  },
+);
+
+export const updatePassword = createAsyncThunk<
+  any,
+  any,
+  { rejectValue: ApiError }
+>("auth/updatePassword", async (data, { rejectWithValue }) => {
+  try {
+    const res = await axios.patch("/api/auth/change-password", data);
+    return res.data;
+  } catch (err: any) {
+    return rejectWithValue({
+      message: err.response?.data?.message || "Password update failed",
+    });
+  }
+});
+
+export const deleteAccount = createAsyncThunk<
+  any,
+  void,
+  { rejectValue: ApiError }
+>("auth/deleteAccount", async (_, { rejectWithValue }) => {
+  try {
+    const res = await axios.delete("/api/auth/delete-account");
+    return res.data;
+  } catch (err: any) {
+    return rejectWithValue({
+      message: err.response?.data?.message || "Account deletion failed",
+    });
+  }
+});
+
 const authSlice = createSlice({
   name: "auth",
   initialState,
@@ -228,6 +329,95 @@ const authSlice = createSlice({
       .addCase(facebookLogin.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload?.message ?? null;
+      })
+      .addCase(register.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(register.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload.data;
+        state.successMessage = action.payload.message;
+      })
+      .addCase(register.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload?.message || null;
+      })
+      .addCase(login.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(login.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload.data;
+        state.successMessage = action.payload.message;
+      })
+      .addCase(login.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload?.message || null;
+      })
+      .addCase(me.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(me.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload.data || action.payload;
+      })
+      .addCase(me.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload?.message || null;
+      })
+      .addCase(logout.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(logout.fulfilled, (state) => {
+        state.isLoading = false;
+        state.user = null;
+        state.successMessage = "Logged out successfully";
+      })
+      .addCase(logout.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload?.message || null;
+      })
+      .addCase(updateUser.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(updateUser.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload.data;
+        state.successMessage = action.payload.message;
+      })
+      .addCase(updateUser.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload?.message || null;
+      })
+      .addCase(updatePassword.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(updatePassword.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.successMessage = action.payload.message;
+      })
+      .addCase(updatePassword.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload?.message || null;
+      })
+      .addCase(deleteAccount.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(deleteAccount.fulfilled, (state) => {
+        state.isLoading = false;
+        state.user = null;
+        state.successMessage = "Account deleted successfully";
+      })
+      .addCase(deleteAccount.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload?.message || null;
       });
   },
 });

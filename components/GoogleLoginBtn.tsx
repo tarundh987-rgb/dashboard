@@ -2,7 +2,7 @@ import { GoogleLogin } from "@react-oauth/google";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useAppDispatch } from "@/redux/hooks";
-import { googleLogin } from "@/redux/features/auth/authSlice";
+import { googleLogin, setUser } from "@/redux/features/auth/authSlice";
 import Image from "next/image";
 
 export default function GoogleLoginBtn() {
@@ -18,7 +18,13 @@ export default function GoogleLoginBtn() {
         }
 
         try {
-          await dispatch(googleLogin({ token: res.credential })).unwrap();
+          const response = await dispatch(googleLogin({ token: res.credential })).unwrap();
+          
+          // Extract user data from response
+          const userData = response.data || response;
+          
+          // Dispatch setUser to store user data
+          dispatch(setUser(userData));
 
           toast.success("Logged in successfully");
           router.push("/");

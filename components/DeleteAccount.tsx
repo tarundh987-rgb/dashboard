@@ -1,6 +1,6 @@
 "use client";
 
-import { useDeleteAccountMutation } from "@/redux/features/auth/authApi";
+import { deleteAccount } from "@/redux/features/auth/authSlice";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,23 +14,23 @@ import {
 } from "./ui/alert-dialog";
 import { Button } from "./ui/button";
 import { toast } from "sonner";
-import { useDispatch } from "react-redux";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { clearUser } from "@/redux/features/auth/authSlice";
 import { useRouter } from "next/navigation";
 
 export default function DeleteAccount() {
-  const [deleteAccountApi, { isLoading }] = useDeleteAccountMutation();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
+  const isLoading = useAppSelector((state) => state.auth.isLoading);
   const router = useRouter();
 
   const handleDelete = async () => {
     try {
-      await deleteAccountApi().unwrap();
+      await dispatch(deleteAccount()).unwrap();
       toast.success("Account deleted successfully.");
       dispatch(clearUser());
       router.push("/");
     } catch (error: any) {
-      toast.error(error?.data?.message || "Failed to delete account");
+      toast.error(error?.message || "Failed to delete account");
     }
   };
 

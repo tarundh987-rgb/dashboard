@@ -17,12 +17,11 @@ import DobPicker from "./DobPicker";
 import { useState } from "react";
 import { calculateAge } from "@/utils/ageCalculator";
 import { Textarea } from "./ui/textarea";
-import { useRegisterMutation } from "@/redux/features/auth/authApi";
+import { register } from "@/redux/features/auth/authSlice";
 import { registerSchema } from "@/verification/auth.verification";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import type { FetchBaseQueryError } from "@reduxjs/toolkit/query/react";
-import { SerializedError } from "@reduxjs/toolkit";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import GoogleLoginBtn from "./GoogleLoginBtn";
 import GitHubLoginBtn from "./GitHubLoginBtn";
 
@@ -36,15 +35,12 @@ type SignupFormState = {
   dob?: Date;
 };
 
-function isFetchBaseQueryError(error: unknown): error is FetchBaseQueryError {
-  return typeof error === "object" && error !== null && "status" in error;
-}
-
 export function SignupForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  const [registerApi, { isLoading }] = useRegisterMutation();
+  const dispatch = useAppDispatch();
+  const isLoading = useAppSelector((state) => state.auth.isLoading);
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const router = useRouter();
 
@@ -83,19 +79,11 @@ export function SignupForm({
     const validatedData = result.data;
 
     try {
-      await registerApi(validatedData).unwrap();
+      await dispatch(register(validatedData)).unwrap();
       toast.success("User registered successfully.");
-      router.push("/sign-in");
-    } catch (err: unknown) {
-      let message = "Registration failed.";
-
-      if (isFetchBaseQueryError(err)) {
-        message = (err.data as any)?.message || "Registration failed.";
-      } else if (typeof err === "object" && err && "message" in err) {
-        message = (err as SerializedError).message ?? message;
-      }
-
-      toast.error(message);
+      router.push("/auth/sign-in");
+    } catch (err: any) {
+      toast.error(err?.message || "Registration failed.");
     }
   };
 

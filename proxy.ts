@@ -52,6 +52,10 @@ export default async function proxy(req: NextRequest) {
     return NextResponse.redirect(new URL("/", req.url));
   }
 
+  if (user && user.role !== "ADMIN" && pathname.startsWith("/admin-users")) {
+    return NextResponse.redirect(new URL("/", req.url));
+  }
+
   if (user) {
     const res = NextResponse.next();
     res.headers.set("x-user-id", user.id);
