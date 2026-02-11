@@ -31,6 +31,10 @@ const nav = {
       title: "Settings",
       url: "/settings",
     },
+    {
+      title: "Messages",
+      url: "/messages",
+    },
   ],
 };
 const adminNav = {

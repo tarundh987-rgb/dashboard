@@ -6,6 +6,7 @@ import ReduxProvider from "@/redux/provider";
 import { Toaster } from "@/components/ui/sonner";
 import AuthInitializer from "@/components/AuthInitializer";
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import { SocketProvider } from "@/components/SocketProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -42,9 +43,11 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <ReduxProvider>
-              <AuthInitializer />
-              {children}
-              <Toaster position="top-right" richColors />
+              <SocketProvider>
+                <AuthInitializer />
+                {children}
+                <Toaster position="top-right" richColors />
+              </SocketProvider>
             </ReduxProvider>
           </ThemeProvider>
         </GoogleOAuthProvider>

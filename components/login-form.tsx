@@ -22,7 +22,6 @@ import { setUser } from "@/redux/features/auth/authSlice";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import GoogleLoginBtn from "./GoogleLoginBtn";
 import GitHubLoginBtn from "./GitHubLoginBtn";
-import FacebookLoginBtn from "./FacebookLoginButton";
 
 type LoginFormState = {
   email: string;
@@ -149,7 +148,6 @@ export function LoginForm({
               <div className="flex flex-col gap-3">
                 <GoogleLoginBtn />
                 <GitHubLoginBtn />
-                <FacebookLoginBtn />
               </div>
 
               <FieldDescription className="text-center">
