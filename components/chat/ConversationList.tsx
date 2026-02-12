@@ -15,6 +15,9 @@ interface Conversation {
     createdAt: string;
   };
   updatedAt: string;
+  isGroup?: boolean;
+  name?: string;
+  groupAdmin?: string;
 }
 
 interface ConversationListProps {
@@ -74,6 +77,13 @@ export default function ConversationList({
         {conversations.map((conversation) => {
           const otherUser = getOtherParticipant(conversation);
           const isSelected = selectedConversationId === conversation._id;
+          const isGroup = conversation.isGroup;
+          const name = isGroup
+            ? conversation.name
+            : otherUser?.firstName || otherUser?.email || "Unknown";
+          const avatarFallback = isGroup
+            ? name?.[0]?.toUpperCase()
+            : otherUser?.email?.[0]?.toUpperCase() || "?";
 
           return (
             <Link href={"/"} key={conversation._id}>
@@ -87,13 +97,12 @@ export default function ConversationList({
                 <div className="flex items-start justify-center gap-3 ">
                   <Avatar className="h-6 w-6 shrink-0">
                     <div className="h-full w-full bg-accent/80 flex items-center justify-center text-sm font-semibold">
-                      {otherUser?.email?.[0]?.toUpperCase() || "?"}
+                      {avatarFallback}
                     </div>
                   </Avatar>
                   <div className="flex-1">
                     <p className="font-medium truncate">
-                      {otherUser?.firstName || otherUser?.email || "Unknown"}{" "}
-                      {otherUser?.lastName}
+                      {name} {!isGroup && otherUser?.lastName}
                     </p>
                   </div>
                 </div>

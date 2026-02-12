@@ -39,7 +39,35 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { otherUserId } = body;
+    const { otherUserId, isGroup, members, name } = body;
+
+    await dbConnect();
+
+    if (isGroup) {
+      if (!members || members.length < 2 || !name) {
+        return NextResponse.json(
+          { message: "Invalid data for group chat" },
+          { status: 400 },
+        );
+      }
+
+      const newConversation = await Conversation.create({
+        name,
+        isGroup: true,
+        participants: [userId, ...members],
+        groupAdmin: userId,
+      });
+
+      const populatedConversation = await newConversation.populate(
+        "participants",
+        "email firstName lastName image",
+      );
+
+      return NextResponse.json(
+        { data: populatedConversation },
+        { status: 201 },
+      );
+    }
 
     if (!otherUserId) {
       return NextResponse.json(
@@ -48,10 +76,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    await dbConnect();
-
     let conversation = await Conversation.findOne({
       participants: { $all: [userId, otherUserId], $size: 2 },
+      isGroup: false,
     })
       .populate("participants", "email firstName lastName image")
       .populate("lastMessage");
@@ -62,6 +89,7 @@ export async function POST(req: NextRequest) {
 
     conversation = await Conversation.create({
       participants: [userId, otherUserId],
+      isGroup: false,
     });
 
     conversation = await conversation.populate(

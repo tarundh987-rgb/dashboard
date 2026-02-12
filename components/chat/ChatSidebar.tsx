@@ -18,6 +18,7 @@ import UserSearchDialog from "@/components/chat/UserSearchDialog";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
 import { selectConversation } from "@/redux/features/chat/chatSlice";
+import GroupChatModal from "./GroupChatModal";
 
 export function ChatSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const dispatch = useDispatch();
@@ -41,11 +42,18 @@ export function ChatSidebar(props: React.ComponentProps<typeof Sidebar>) {
             <SidebarGroupLabel className="text-sm font-semibold text-sidebar-foreground uppercase tracking-wider">
               Messages
             </SidebarGroupLabel>
-            <UserSearchDialog
-              onSelectUser={(conversationId: string) => {
-                dispatch(selectConversation(conversationId));
-              }}
-            />
+            <div className="flex items-center gap-1">
+              <GroupChatModal
+                onSelectConversation={(conversationId: string) => {
+                  dispatch(selectConversation(conversationId));
+                }}
+              />
+              <UserSearchDialog
+                onSelectUser={(conversationId: string) => {
+                  dispatch(selectConversation(conversationId));
+                }}
+              />
+            </div>
           </div>
           <SidebarMenu className="px-2 py-2">
             <ConversationList

@@ -14,8 +14,12 @@ import { Plus, Search, Loader2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import axios from "axios";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useAppSelector } from "@/redux/hooks";
-import { useRouter } from "next/navigation";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface User {
   _id: string;
@@ -65,7 +69,6 @@ export default function UserSearchDialog({
       onSelectUser(conversationId);
 
       setOpen(false);
-      // window.location.reload(); // Removed reload
     } catch (error) {
       console.error("Failed to start conversation", error);
     }
@@ -73,15 +76,21 @@ export default function UserSearchDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm" variant="outline" className="cursor-pointer">
-          <Plus className="h-4 w-4 mr-2" />
-          New Chat
-        </Button>
-      </DialogTrigger>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DialogTrigger asChild>
+            <Button size="sm" variant="outline" className="cursor-pointer">
+              <Plus className="h-4 w-4" />
+            </Button>
+          </DialogTrigger>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>New Chat</p>
+        </TooltipContent>
+      </Tooltip>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>New Conversation</DialogTitle>
+          <DialogTitle>New Chat</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div className="relative">
