@@ -36,6 +36,18 @@ export default function ChatWindow({ conversationId }: ChatWindowProps) {
   const { socket, isConnected } = useSocket();
   const currentUser = useAppSelector((state) => state.auth.user);
 
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.on("connect", () => {
+      console.log("✅ Socket connected:", socket.id);
+    });
+
+    socket.on("connect_error", (err) => {
+      console.error("❌ Socket error:", err.message);
+    });
+  }, [socket]);
+
   // Fetch messages when conversation changes
   useEffect(() => {
     const fetchMessages = async () => {
@@ -141,7 +153,6 @@ export default function ChatWindow({ conversationId }: ChatWindowProps) {
         // But for "incoming" messages, they usually come from *other* users.
         // We might need to fetch the message or user info if missing.
         // For now, let's assume valid data or fallback.
-        return [message, ...prev]; // My API returns reverse order (newest first)?
         // API GET: `.sort({ createdAt: -1 }) ... .reverse()` -> so API returns Oldest -> Newest.
         // So I should append to end.
         return [...prev, message];

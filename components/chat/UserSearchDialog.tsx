@@ -65,31 +65,10 @@ export default function UserSearchDialog({
       });
       const conversationId = res.data.data._id;
 
-      onSelectUser(userId); // Optional callback
-
-      // Update the URL or state in parent to open this conversation
-      // We might need to expose a method to parent or better, just trigger a refresh/selection in parent?
-      // Since `onSelectUser` is passed, let's assume the parent handles the selection.
-      // But typically this component might just want to return the conversationId.
-
-      // The parent `MessagesPage` needs to know about the new conversation.
-      // We should probably pass `onConversationSelected` instead of `onSelectUser` if possible,
-      // But adhering to the interface defined:
-
-      // Actually, let's modify the interface to pass the conversation ID back if possible,
-      // or effectively the parent will re-fetch list and find it?
-      // Simpler: Just close dialog and let parent handle logic if it passed a callback.
-      // Wait, `onSelectUser` in `MessagesPage` was:
-      // onSelectUser={(userId) => { // Will be handled by creating/selecting conversation }}
-
-      // So I should implement that logic there.
-      // However, it's better if this component does the "Create/Get" and returns the conversation ID to the parent.
-      // I'll call `onSelectUser` with the ID, but knowing the "Phase 4" plan implies this component primarily searches.
-      // Let's stick to the implementation that does the creation here as it's a "User Search & Start Chat" action.
+      onSelectUser(userId);
 
       setOpen(false);
-      window.location.reload(); // Quick fix to refresh list, but ideally we update state.
-      // A better UX is to update conversation list context or callback.
+      window.location.reload();
     } catch (error) {
       console.error("Failed to start conversation", error);
     }
@@ -118,7 +97,7 @@ export default function UserSearchDialog({
             />
           </div>
 
-          <ScrollArea className="h-[300px]">
+          <ScrollArea className="h-75">
             {loading ? (
               <div className="flex items-center justify-center py-4">
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />

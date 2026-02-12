@@ -2,15 +2,13 @@ import { io, Socket } from "socket.io-client";
 
 let socket: Socket | null = null;
 
-export const initializeSocket = (token: string): Socket => {
+export const initializeSocket = (): Socket => {
   if (socket && socket.connected) {
     return socket;
   }
 
   socket = io(process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000", {
-    auth: {
-      token,
-    },
+    withCredentials: true,
     autoConnect: true,
   });
 

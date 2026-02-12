@@ -34,21 +34,31 @@ app.prepare().then(() => {
 
   // Socket.IO authentication middleware
   io.use((socket, next) => {
-    try {
-      const token = socket.handshake.auth.token;
+  const cookieHeader = socket.handshake.headers.cookie;
 
-      if (!token) {
-        return next(new Error("Authentication error: No token provided"));
-      }
 
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      socket.userId = decoded.id;
-      socket.userEmail = decoded.email;
-      next();
-    } catch (err) {
-      next(new Error("Authentication error: Invalid token"));
-    }
-  });
+  if (!cookieHeader) {
+    return next(new Error("No cookies found"));
+  }
+
+  const token = cookieHeader
+    .split("; ")
+    .find((row) => row.startsWith("auth_token="))
+    ?.split("=")[1];
+
+  if (!token) {
+    return next(new Error("No auth token"));
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    socket.userId = decoded.id;
+    next();
+  } catch (err) {
+    next(new Error("Invalid token"));
+  }
+});
+
 
   // Store active socket connections (userId -> socketId mapping)
   const userSockets = new Map();

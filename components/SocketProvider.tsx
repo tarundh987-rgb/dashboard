@@ -2,11 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { Socket } from "socket.io-client";
-import {
-  initializeSocket,
-  disconnectSocket,
-  getSocket,
-} from "@/lib/socket-client";
+import { initializeSocket } from "@/lib/socket-client";
 import { useAppSelector } from "@/redux/hooks";
 
 interface SocketContextType {
@@ -33,42 +29,24 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
   const user = useAppSelector((state) => state.auth.user);
 
   useEffect(() => {
-    // Only initialize socket if user is authenticated
-    if (user) {
-      // Get auth token from cookies
-      const token = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("auth_token="))
-        ?.split("=")[1];
+    if (!user) return;
 
-      if (token) {
-        const newSocket = initializeSocket(token);
+    const newSocket = initializeSocket();
 
-        newSocket.on("connect", () => {
-          console.log("Socket connected");
-          setIsConnected(true);
-        });
+    newSocket.on("connect", () => {
+      setIsConnected(true);
+    });
 
-        newSocket.on("disconnect", () => {
-          console.log("Socket disconnected");
-          setIsConnected(false);
-        });
+    newSocket.on("disconnect", () => {
+      setIsConnected(false);
+    });
 
-        newSocket.on("connect_error", (error) => {
-          console.error("Socket connection error:", error);
-          setIsConnected(false);
-        });
+    newSocket.on("connect_error", (error) => {
+      console.error("Socket connection error:", error);
+      setIsConnected(false);
+    });
 
-        setSocket(newSocket);
-      }
-    } else {
-      // Disconnect socket when user logs out
-      if (socket) {
-        disconnectSocket();
-        setSocket(null);
-        setIsConnected(false);
-      }
-    }
+    setSocket(newSocket);
 
     // Cleanup on unmount
     return () => {

@@ -38,15 +38,17 @@ export default function ConversationList({
   }, []);
 
   useEffect(() => {
-    if (socket && isConnected) {
-      socket.on("new_message", () => {
-        fetchConversations();
-      });
+    if (!socket || !isConnected) return;
 
-      return () => {
-        socket.off("new_message");
-      };
-    }
+    const handleConversationUpdated = () => {
+      fetchConversations();
+    };
+
+    socket.on("conversation_updated", handleConversationUpdated);
+
+    return () => {
+      socket.off("conversation_updated", handleConversationUpdated);
+    };
   }, [socket, isConnected]);
 
   const fetchConversations = async () => {
