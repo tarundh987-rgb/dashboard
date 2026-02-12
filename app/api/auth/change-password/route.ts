@@ -29,7 +29,7 @@ export const PATCH = withApiHandler(async (req: NextRequest) => {
     throw new ApiError(404, "User not found.");
   }
 
-  const compare = await comparePassword(currentPassword, user.password);
+  const compare = await comparePassword(currentPassword, user.password!);
 
   if (!compare) {
     throw new ApiError(401, "Incorrect Credentials");

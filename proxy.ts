@@ -3,7 +3,7 @@ import { verifyToken } from "@/lib/auth";
 import jwt from "jsonwebtoken";
 import redisClient from "./lib/redis";
 
-export default async function proxy(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   if (pathname.startsWith("/_next") || pathname.startsWith("/favicon.ico")) {
@@ -36,23 +36,29 @@ export default async function proxy(req: NextRequest) {
     }
   }
 
+  if (pathname === "/") {
+    if (!user) {
+      return NextResponse.redirect(new URL("/auth/sign-in", req.url));
+    }
+  }
+
+  if (pathname.startsWith("/dashboard")) {
+    if (!user) {
+      return NextResponse.redirect(new URL("/auth/sign-in", req.url));
+    }
+    if (user.role !== "ADMIN") {
+      return NextResponse.redirect(new URL("/", req.url));
+    }
+  }
+
   const isPublicPage =
     pathname.startsWith("/auth/sign-in") ||
     pathname.startsWith("/auth/sign-up");
 
   if (user && isPublicPage) {
-    return NextResponse.redirect(new URL("/", req.url));
-  }
-
-  if (!user && pathname.startsWith("/settings")) {
-    return NextResponse.redirect(new URL("/auth/sign-in", req.url));
-  }
-
-  if (user && user.role !== "ADMIN" && pathname.startsWith("/create-user")) {
-    return NextResponse.redirect(new URL("/", req.url));
-  }
-
-  if (user && user.role !== "ADMIN" && pathname.startsWith("/admin-users")) {
+    if (user.role === "ADMIN") {
+      return NextResponse.redirect(new URL("/dashboard", req.url));
+    }
     return NextResponse.redirect(new URL("/", req.url));
   }
 
@@ -64,6 +70,6 @@ export default async function proxy(req: NextRequest) {
   return NextResponse.next();
 }
 
-export const config = {
+export const proxyConfig = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };

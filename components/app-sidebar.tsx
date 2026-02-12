@@ -13,48 +13,39 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import Link from "next/link";
-import { useSelector } from "react-redux";
-import { RootState } from "@/redux/store";
 
 const nav = {
   title: "Home",
   items: [
     {
       title: "Dashboard",
-      url: "/",
+      url: "/dashboard",
     },
     {
       title: "Analytics",
-      url: "/analytics",
+      url: "/dashboard/analytics",
     },
-    {
-      title: "Settings",
-      url: "/settings",
-    },
-    {
-      title: "Messages",
-      url: "/messages",
-    },
-  ],
-};
-const adminNav = {
-  title: "Admin",
-  items: [
     {
       title: "Create User",
-      url: "/create-user",
+      url: "/dashboard/create-user",
     },
     {
       title: "Manage Users",
-      url: "/admin-users",
+      url: "/dashboard/admin-users",
+    },
+    {
+      title: "Messages",
+      url: "/",
+    },
+    {
+      title: "Settings",
+      url: "/dashboard/settings",
     },
   ],
 };
 
 export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
-
-  const user = useSelector((state: RootState) => state.auth.user);
 
   return (
     <Sidebar
@@ -69,8 +60,8 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenu>
             {nav.items.map((item) => {
               const isActive =
-                item.url === "/"
-                  ? pathname === "/"
+                item.url === "/dashboard" || item.url === "/"
+                  ? pathname === item.url
                   : pathname.startsWith(item.url);
 
               return (
@@ -82,30 +73,6 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
               );
             })}
           </SidebarMenu>
-
-          {user?.role === "ADMIN" && (
-            <>
-              <SidebarGroupLabel className="mt-3">
-                {adminNav.title}
-              </SidebarGroupLabel>
-              <SidebarMenu>
-                {adminNav.items.map((item) => {
-                  const isActive =
-                    item.url === "/"
-                      ? pathname === "/"
-                      : pathname.startsWith(item.url);
-
-                  return (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild isActive={isActive}>
-                        <Link href={item.url}>{item.title}</Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </>
-          )}
         </SidebarGroup>
       </SidebarContent>
     </Sidebar>
