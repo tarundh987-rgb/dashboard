@@ -255,7 +255,7 @@ export default function ChatWindow({ conversationId }: ChatWindowProps) {
                 }`}
               >
                 {!isMe && (
-                  <Avatar className="h-8 w-8">
+                  <Avatar className="h-8 w-8 mt-1 border border-border">
                     <AvatarImage
                       src={
                         typeof msg.sender === "object" ? msg.sender.image : ""
@@ -273,15 +273,15 @@ export default function ChatWindow({ conversationId }: ChatWindowProps) {
                   className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}
                 >
                   <div
-                    className={`p-3 rounded-lg text-sm ${
+                    className={`px-4 py-2 rounded-2xl text-sm shadow-sm ${
                       isMe
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-white dark:bg-zinc-800 border shadow-sm"
+                        ? "bg-primary text-primary-foreground rounded-tr-sm"
+                        : "bg-background border border-border rounded-tl-sm text-foreground"
                     }`}
                   >
                     {msg.text}
                   </div>
-                  <span className="text-[10px] text-muted-foreground mt-1 px-1">
+                  <span className="text-[10px] text-muted-foreground mt-1 px-1 opacity-70">
                     {format(new Date(msg.createdAt), "p")}
                   </span>
                 </div>

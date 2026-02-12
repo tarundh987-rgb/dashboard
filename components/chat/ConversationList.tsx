@@ -23,13 +23,13 @@ interface ConversationListProps {
 }
 
 import { useAppSelector } from "@/redux/hooks";
+import Link from "next/link";
 
 export default function ConversationList({
   selectedConversationId,
   onSelectConversation,
 }: ConversationListProps) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [loading, setLoading] = useState(true);
   const { socket, isConnected } = useSocket();
   const currentUser = useAppSelector((state) => state.auth.user);
 
@@ -57,8 +57,6 @@ export default function ConversationList({
       setConversations(res.data.data);
     } catch (error) {
       console.error("Error fetching conversations:", error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -70,24 +68,6 @@ export default function ConversationList({
     );
   };
 
-  if (loading) {
-    return (
-      <div className="flex-1 flex items-center justify-center p-4">
-        <p className="text-muted-foreground">Loading conversations...</p>
-      </div>
-    );
-  }
-
-  if (conversations.length === 0) {
-    return (
-      <div className="flex-1 flex items-center justify-center p-4 text-center">
-        <p className="text-muted-foreground text-sm">
-          No conversations yet. Search for users to start chatting!
-        </p>
-      </div>
-    );
-  }
-
   return (
     <ScrollArea className="flex-1">
       <div className="divide-y">
@@ -96,41 +76,29 @@ export default function ConversationList({
           const isSelected = selectedConversationId === conversation._id;
 
           return (
-            <button
-              key={conversation._id}
-              onClick={() => onSelectConversation(conversation._id)}
-              className={cn(
-                "w-full p-4 text-left hover:bg-muted/50 transition-colors",
-                isSelected && "bg-muted",
-              )}
-            >
-              <div className="flex items-start gap-3">
-                <Avatar className="h-10 w-10 shrink-0">
-                  <div className="h-full w-full bg-primary/10 flex items-center justify-center text-sm font-semibold">
-                    {otherUser?.email?.[0]?.toUpperCase() || "?"}
-                  </div>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
+            <Link href={"/"} key={conversation._id}>
+              <button
+                onClick={() => onSelectConversation(conversation._id)}
+                className={cn(
+                  "w-full p-2 text-left hover:bg-accent/50 hover:text-accent-foreground cursor-pointer transition-colors rounded-lg",
+                  isSelected && "bg-primary/70 text-primary-foreground",
+                )}
+              >
+                <div className="flex items-start justify-center gap-3 ">
+                  <Avatar className="h-6 w-6 shrink-0">
+                    <div className="h-full w-full bg-accent/80 flex items-center justify-center text-sm font-semibold">
+                      {otherUser?.email?.[0]?.toUpperCase() || "?"}
+                    </div>
+                  </Avatar>
+                  <div className="flex-1">
                     <p className="font-medium truncate">
-                      {otherUser?.firstName || otherUser?.email || "Unknown"}
+                      {otherUser?.firstName || otherUser?.email || "Unknown"}{" "}
+                      {otherUser?.lastName}
                     </p>
-                    {conversation.lastMessage && (
-                      <span className="text-xs text-muted-foreground shrink-0">
-                        {new Date(
-                          conversation.lastMessage.createdAt,
-                        ).toLocaleDateString()}
-                      </span>
-                    )}
                   </div>
-                  {conversation.lastMessage && (
-                    <p className="text-sm text-muted-foreground truncate">
-                      {conversation.lastMessage.text}
-                    </p>
-                  )}
                 </div>
-              </div>
-            </button>
+              </button>
+            </Link>
           );
         })}
       </div>

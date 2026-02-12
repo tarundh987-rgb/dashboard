@@ -26,7 +26,7 @@ interface User {
 }
 
 interface UserSearchDialogProps {
-  onSelectUser: (userId: string) => void;
+  onSelectUser: (conversationId: string) => void;
 }
 
 export default function UserSearchDialog({
@@ -36,8 +36,6 @@ export default function UserSearchDialog({
   const [query, setQuery] = useState("");
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
-  const currentUser = useAppSelector((state) => state.auth.user);
-  const router = useRouter();
 
   const handleSearch = async (value: string) => {
     setQuery(value);
@@ -59,16 +57,15 @@ export default function UserSearchDialog({
 
   const handleSelect = async (userId: string) => {
     try {
-      // Create or get conversation
       const res = await axios.post("/api/conversations", {
         otherUserId: userId,
       });
       const conversationId = res.data.data._id;
 
-      onSelectUser(userId);
+      onSelectUser(conversationId);
 
       setOpen(false);
-      window.location.reload();
+      // window.location.reload(); // Removed reload
     } catch (error) {
       console.error("Failed to start conversation", error);
     }
@@ -77,7 +74,7 @@ export default function UserSearchDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="outline">
+        <Button size="sm" variant="outline" className="cursor-pointer">
           <Plus className="h-4 w-4 mr-2" />
           New Chat
         </Button>

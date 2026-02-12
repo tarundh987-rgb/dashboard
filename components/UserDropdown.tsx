@@ -17,11 +17,13 @@ import { LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { clearUser, logout } from "@/redux/features/auth/authSlice";
 import { useAppDispatch } from "@/redux/hooks";
+import { useRouter } from "next/navigation";
 
 export default function UserDropdown() {
   const user = useSelector((state: RootState) => state.auth.user);
   const isLoading = useSelector((state: RootState) => state.auth.isLoading);
   const dispatch = useAppDispatch();
+  const router = useRouter();
 
   if (!user) {
     return (
@@ -36,6 +38,7 @@ export default function UserDropdown() {
       await dispatch(logout()).unwrap();
       dispatch(clearUser());
       toast.success("Logged out successfully.");
+      router.push("/auth/sign-in");
     } catch (err: any) {
       toast.error(err?.message || "Logout failed.");
     }
@@ -84,6 +87,18 @@ export default function UserDropdown() {
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />
+
+        {user?.role === "ADMIN" && (
+          <>
+            <DropdownMenuItem asChild className="cursor-pointer">
+              <Link href="/dashboard">
+                <span className="font-semibold">Dashboard</span>
+              </Link>
+            </DropdownMenuItem>
+
+            <DropdownMenuSeparator />
+          </>
+        )}
 
         <DropdownMenuItem
           onClick={handleLogout}
