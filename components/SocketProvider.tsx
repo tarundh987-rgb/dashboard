@@ -8,11 +8,13 @@ import { useAppSelector } from "@/redux/hooks";
 interface SocketContextType {
   socket: Socket | null;
   isConnected: boolean;
+  onlineUsers: Set<string>;
 }
 
 const SocketContext = createContext<SocketContextType>({
   socket: null,
   isConnected: false,
+  onlineUsers: new Set(),
 });
 
 export const useSocket = () => {
@@ -26,6 +28,7 @@ export const useSocket = () => {
 export function SocketProvider({ children }: { children: React.ReactNode }) {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
   const user = useAppSelector((state) => state.auth.user);
 
   useEffect(() => {
@@ -46,20 +49,41 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
       setIsConnected(false);
     });
 
+    newSocket.on("online_users_list", ({ userIds }: { userIds: string[] }) => {
+      setOnlineUsers(new Set(userIds));
+    });
+
+    newSocket.on("user_online", ({ userId }: { userId: string }) => {
+      setOnlineUsers((prev) => {
+        const newSet = new Set(prev);
+        newSet.add(userId);
+        return newSet;
+      });
+    });
+
+    newSocket.on("user_offline", ({ userId }: { userId: string }) => {
+      setOnlineUsers((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(userId);
+        return newSet;
+      });
+    });
+
     setSocket(newSocket);
 
-    // Cleanup on unmount
     return () => {
       if (socket) {
         socket.off("connect");
         socket.off("disconnect");
         socket.off("connect_error");
+        socket.off("user_online");
+        socket.off("user_offline");
       }
     };
   }, [user]);
 
   return (
-    <SocketContext.Provider value={{ socket, isConnected }}>
+    <SocketContext.Provider value={{ socket, isConnected, onlineUsers }}>
       {children}
     </SocketContext.Provider>
   );

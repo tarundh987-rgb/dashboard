@@ -33,7 +33,7 @@ export default function ConversationList({
   onSelectConversation,
 }: ConversationListProps) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const { socket, isConnected } = useSocket();
+  const { socket, isConnected, onlineUsers } = useSocket();
   const currentUser = useAppSelector((state) => state.auth.user);
 
   useEffect(() => {
@@ -73,44 +73,49 @@ export default function ConversationList({
 
   return (
     <ScrollArea className="flex-1">
-      <div className="divide-y">
-        {conversations.map((conversation) => {
-          const otherUser = getOtherParticipant(conversation);
-          const isSelected = selectedConversationId === conversation._id;
-          const isGroup = conversation.isGroup;
-          const name = isGroup
-            ? conversation.name
-            : otherUser?.firstName || otherUser?.email || "Unknown";
-          const avatarFallback = isGroup
-            ? name?.[0]?.toUpperCase()
-            : otherUser?.email?.[0]?.toUpperCase() || "?";
+      {conversations.map((conversation) => {
+        const otherUser = getOtherParticipant(conversation);
+        const isSelected = selectedConversationId === conversation._id;
+        const isGroup = conversation.isGroup;
+        const name = isGroup
+          ? conversation.name
+          : otherUser?.firstName || otherUser?.email || "Unknown";
+        const avatarFallback = isGroup
+          ? name?.[0]?.toUpperCase()
+          : otherUser?.email?.[0]?.toUpperCase() || "?";
+        const isOnline =
+          !isGroup && otherUser?._id && onlineUsers.has(otherUser._id);
 
-          return (
-            <Link href={"/"} key={conversation._id}>
-              <button
-                onClick={() => onSelectConversation(conversation._id)}
-                className={cn(
-                  "w-full p-2 text-left hover:bg-accent/50 hover:text-accent-foreground cursor-pointer transition-colors rounded-lg",
-                  isSelected && "bg-primary/70 text-primary-foreground",
-                )}
-              >
-                <div className="flex items-start justify-center gap-3 ">
+        return (
+          <Link href={"/"} key={conversation._id}>
+            <button
+              onClick={() => onSelectConversation(conversation._id)}
+              className={cn(
+                "w-full p-2 text-left hover:bg-accent/50 hover:text-accent-foreground cursor-pointer transition-colors rounded-lg",
+                isSelected && "bg-primary/70 text-primary-foreground",
+              )}
+            >
+              <div className="flex items-start justify-center gap-3 ">
+                <div className="relative">
                   <Avatar className="h-6 w-6 shrink-0">
                     <div className="h-full w-full bg-accent/80 flex items-center justify-center text-sm font-semibold">
                       {avatarFallback}
                     </div>
                   </Avatar>
-                  <div className="flex-1">
-                    <p className="font-medium truncate">
-                      {name} {!isGroup && otherUser?.lastName}
-                    </p>
-                  </div>
+                  {isOnline && (
+                    <div className="absolute bottom-0 right-0 h-2 w-2 bg-green-500 rounded-full border border-background" />
+                  )}
                 </div>
-              </button>
-            </Link>
-          );
-        })}
-      </div>
+                <div className="flex-1">
+                  <p className="font-medium truncate">
+                    {name} {!isGroup && otherUser?.lastName}
+                  </p>
+                </div>
+              </div>
+            </button>
+          </Link>
+        );
+      })}
     </ScrollArea>
   );
 }

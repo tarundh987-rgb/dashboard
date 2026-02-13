@@ -23,7 +23,6 @@ app.prepare().then(() => {
     }
   });
 
-  // Initialize Socket.IO
   const io = new Server(httpServer, {
     cors: {
       origin: process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000",
@@ -32,47 +31,43 @@ app.prepare().then(() => {
     },
   });
 
-  // Socket.IO authentication middleware
   io.use((socket, next) => {
-  const cookieHeader = socket.handshake.headers.cookie;
+    const cookieHeader = socket.handshake.headers.cookie;
 
+    if (!cookieHeader) {
+      return next(new Error("No cookies found"));
+    }
 
-  if (!cookieHeader) {
-    return next(new Error("No cookies found"));
-  }
+    const token = cookieHeader
+      .split("; ")
+      .find((row) => row.startsWith("auth_token="))
+      ?.split("=")[1];
 
-  const token = cookieHeader
-    .split("; ")
-    .find((row) => row.startsWith("auth_token="))
-    ?.split("=")[1];
+    if (!token) {
+      return next(new Error("No auth token"));
+    }
 
-  if (!token) {
-    return next(new Error("No auth token"));
-  }
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      socket.userId = decoded.id;
+      next();
+    } catch (err) {
+      next(new Error("Invalid token"));
+    }
+  });
 
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    socket.userId = decoded.id;
-    next();
-  } catch (err) {
-    next(new Error("Invalid token"));
-  }
-});
-
-
-  // Store active socket connections (userId -> socketId mapping)
   const userSockets = new Map();
 
   io.on("connection", (socket) => {
     console.log(`User connected: ${socket.userId} (${socket.id})`);
 
-    // Store user's socket connection
     userSockets.set(socket.userId, socket.id);
 
-    // Emit online status to all users
+    const onlineUserIds = Array.from(userSockets.keys());
+    socket.emit("online_users_list", { userIds: onlineUserIds });
+
     io.emit("user_online", { userId: socket.userId });
 
-    // Join a conversation room
     socket.on("join_conversation", ({ conversationId }) => {
       socket.join(`conversation:${conversationId}`);
       console.log(
@@ -80,13 +75,11 @@ app.prepare().then(() => {
       );
     });
 
-    // Leave a conversation room
     socket.on("leave_conversation", ({ conversationId }) => {
       socket.leave(`conversation:${conversationId}`);
       console.log(`User ${socket.userId} left conversation ${conversationId}`);
     });
 
-    // Handle new message
     socket.on("send_message", async (data) => {
       const { conversationId, message } = data;
       console.log(`User ${socket.userId} sent message in ${conversationId}`);
@@ -102,7 +95,6 @@ app.prepare().then(() => {
       io.to(`conversation:${conversationId}`).emit("new_message", payload);
     });
 
-    // Handle typing indicator
     socket.on("typing", ({ conversationId, isTyping }) => {
       socket.to(`conversation:${conversationId}`).emit("user_typing", {
         userId: socket.userId,
@@ -110,7 +102,6 @@ app.prepare().then(() => {
       });
     });
 
-    // Handle message read
     socket.on("mark_read", ({ conversationId, messageId }) => {
       socket.to(`conversation:${conversationId}`).emit("message_read", {
         messageId,
@@ -118,12 +109,10 @@ app.prepare().then(() => {
       });
     });
 
-    // Handle disconnection
     socket.on("disconnect", () => {
       console.log(`User disconnected: ${socket.userId} (${socket.id})`);
       userSockets.delete(socket.userId);
 
-      // Emit offline status
       io.emit("user_offline", { userId: socket.userId });
     });
   });
@@ -138,7 +127,6 @@ app.prepare().then(() => {
       console.log(`> Socket.IO server is running`);
     });
 
-  // Graceful shutdown
   process.on("SIGTERM", () => {
     console.log("SIGTERM signal received: closing HTTP server");
     httpServer.close(() => {

@@ -41,7 +41,7 @@ export default function ChatWindow({ conversationId }: ChatWindowProps) {
   const [loading, setLoading] = useState(true);
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
   const scrollRef = useRef<HTMLDivElement>(null);
-  const { socket, isConnected } = useSocket();
+  const { socket, isConnected, onlineUsers } = useSocket();
   const currentUser = useAppSelector((state) => state.auth.user);
 
   useEffect(() => {
@@ -199,27 +199,44 @@ export default function ChatWindow({ conversationId }: ChatWindowProps) {
   };
 
   const details = getConversationDetails();
+  const otherUser = conversation?.participants.find(
+    (p) => p._id !== currentUser?._id,
+  );
+  const isOnline =
+    !details.isGroup && otherUser?._id && onlineUsers.has(otherUser._id);
 
   return (
     <div className="flex flex-col h-full bg-muted/20">
       <div className="border-b border-border bg-background/50 backdrop-blur-sm p-3 flex items-center gap-3 shadow-sm z-10">
-        <Avatar className="h-10 w-10 border border-border">
-          <AvatarImage src={details.image || ""} />
-          <AvatarFallback className="bg-primary/10 text-primary">
-            {details.isGroup
-              ? details.name?.[0]?.toUpperCase()
-              : details.firstName?.[0] ||
-                details.email?.[0]?.toUpperCase() ||
-                "?"}
-          </AvatarFallback>
-        </Avatar>
+        <div className="relative">
+          <Avatar className="h-10 w-10 border border-border">
+            <AvatarImage src={details.image || ""} />
+            <AvatarFallback className="bg-primary/10 text-primary">
+              {details.isGroup
+                ? details.name?.[0]?.toUpperCase()
+                : details.firstName?.[0] ||
+                  details.email?.[0]?.toUpperCase() ||
+                  "?"}
+            </AvatarFallback>
+          </Avatar>
+          {isOnline && (
+            <div className="absolute bottom-0 right-0 h-2.5 w-2.5 bg-green-500 rounded-full border-2 border-background" />
+          )}
+        </div>
         <div className="flex flex-col">
           <h2 className="font-semibold text-sm leading-tight">
             {details.name}
           </h2>
-          {details.isGroup && (
+          {details.isGroup ? (
             <span className="text-xs text-muted-foreground">
               {conversation?.participants.length} members
+            </span>
+          ) : (
+            <span className="text-xs text-muted-foreground flex items-center gap-1">
+              <div
+                className={`h-1.5 w-1.5 rounded-full ${isOnline ? "bg-green-500" : "bg-gray-400"}`}
+              />
+              {isOnline ? "Online" : "Offline"}
             </span>
           )}
         </div>
