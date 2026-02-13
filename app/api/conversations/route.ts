@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
-import { Conversation } from "@/models";
+import { Conversation, User } from "@/models";
 import { Types } from "mongoose";
 
 export async function GET(req: NextRequest) {
@@ -73,6 +73,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { message: "Other user ID is required" },
         { status: 400 },
+      );
+    }
+
+    const currentUser = await User.findById(userId);
+    if (
+      !currentUser?.connections?.some((id) => id.toString() === otherUserId)
+    ) {
+      return NextResponse.json(
+        {
+          message:
+            "You must be connected with this user to start a conversation",
+        },
+        { status: 403 },
       );
     }
 

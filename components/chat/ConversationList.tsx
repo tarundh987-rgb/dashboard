@@ -47,10 +47,19 @@ export default function ConversationList({
       fetchConversations();
     };
 
+    const handleNewConversation = (conversation: Conversation) => {
+      setConversations((prev) => {
+        if (prev.some((c) => c._id === conversation._id)) return prev;
+        return [conversation, ...prev];
+      });
+    };
+
     socket.on("conversation_updated", handleConversationUpdated);
+    socket.on("new_conversation", handleNewConversation);
 
     return () => {
       socket.off("conversation_updated", handleConversationUpdated);
+      socket.off("new_conversation", handleNewConversation);
     };
   }, [socket, isConnected]);
 

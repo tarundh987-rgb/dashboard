@@ -109,6 +109,36 @@ app.prepare().then(() => {
       });
     });
 
+    socket.on("send_invite", ({ receiverId, invitation }) => {
+      const receiverSocketId = userSockets.get(receiverId);
+      if (receiverSocketId) {
+        io.to(receiverSocketId).emit("invite:received", invitation);
+      }
+    });
+
+    socket.on("accept_invite", ({ senderId, invitation }) => {
+      const senderSocketId = userSockets.get(senderId);
+      if (senderSocketId) {
+        io.to(senderSocketId).emit("invite:accepted", invitation);
+      }
+    });
+
+    socket.on("reject_invite", ({ senderId, invitation }) => {
+      const senderSocketId = userSockets.get(senderId);
+      if (senderSocketId) {
+        io.to(senderSocketId).emit("invite:rejected", invitation);
+      }
+    });
+
+    socket.on("conversation_created", ({ conversation, otherUserId }) => {
+      socket.emit("new_conversation", conversation);
+
+      const otherSocketId = userSockets.get(otherUserId);
+      if (otherSocketId) {
+        io.to(otherSocketId).emit("new_conversation", conversation);
+      }
+    });
+
     socket.on("disconnect", () => {
       console.log(`User disconnected: ${socket.userId} (${socket.id})`);
       userSockets.delete(socket.userId);

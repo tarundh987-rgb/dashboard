@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -10,10 +10,19 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Loader2 } from "lucide-react";
+import {
+  Search,
+  Loader2,
+  UserPlus,
+  MessageCircle,
+  Clock,
+  Check,
+} from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import axios from "axios";
 import { ScrollArea } from "@/components/ui/scroll-area";
+
+import { useSocket } from "@/components/SocketProvider";
 
 interface User {
   _id: string;
@@ -21,6 +30,8 @@ interface User {
   lastName?: string;
   email: string;
   image?: string;
+  inviteStatus?: string;
+  invitationId?: string;
 }
 
 interface UserSearchDialogProps {
@@ -34,6 +45,15 @@ export default function UserSearchDialog({
   const [query, setQuery] = useState("");
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const { socket } = useSocket();
+
+  useEffect(() => {
+    if (!open) {
+      setQuery("");
+      setUsers([]);
+    }
+  }, [open]);
 
   const handleSearch = async (value: string) => {
     setQuery(value);
@@ -53,18 +73,152 @@ export default function UserSearchDialog({
     }
   };
 
-  const handleSelect = async (userId: string) => {
+  const handleStartChat = async (userId: string) => {
+    setActionLoading(userId);
     try {
       const res = await axios.post("/api/conversations", {
         otherUserId: userId,
       });
       const conversationId = res.data.data._id;
 
-      onSelectUser(conversationId);
+      if (socket) {
+        socket.emit("conversation_created", {
+          conversation: res.data.data,
+          otherUserId: userId,
+        });
+      }
 
+      onSelectUser(conversationId);
       setOpen(false);
     } catch (error) {
       console.error("Failed to start conversation", error);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleSendInvite = async (userId: string) => {
+    setActionLoading(userId);
+    try {
+      const res = await axios.post("/api/invitations", {
+        receiverId: userId,
+      });
+
+      if (socket) {
+        socket.emit("send_invite", {
+          receiverId: userId,
+          invitation: res.data.data,
+        });
+      }
+
+      setUsers((prev) =>
+        prev.map((user) =>
+          user._id === userId
+            ? { ...user, inviteStatus: "pending_sent" }
+            : user,
+        ),
+      );
+    } catch (error: any) {
+      console.error("Failed to send invitation", error);
+      alert(error.response?.data?.message || "Failed to send invitation");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleAcceptInvite = async (userId: string, invitationId?: string) => {
+    if (!invitationId) return;
+
+    setActionLoading(userId);
+    try {
+      const res = await axios.post(`/api/invitations/${invitationId}/accept`);
+
+      if (socket) {
+        socket.emit("accept_invite", {
+          senderId: userId,
+          invitation: res.data.data,
+        });
+      }
+
+      setUsers((prev) =>
+        prev.map((user) =>
+          user._id === userId ? { ...user, inviteStatus: "connected" } : user,
+        ),
+      );
+    } catch (error) {
+      console.error("Failed to accept invitation", error);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const renderActionButton = (user: User) => {
+    const isLoading = actionLoading === user._id;
+
+    switch (user.inviteStatus) {
+      case "connected":
+        return (
+          <Button
+            size="sm"
+            onClick={() => handleStartChat(user._id)}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                <MessageCircle className="h-4 w-4 mr-1" />
+                Chat
+              </>
+            )}
+          </Button>
+        );
+
+      case "pending_sent":
+        return (
+          <Button size="sm" variant="secondary" disabled>
+            <Clock className="h-4 w-4 mr-1" />
+            Pending
+          </Button>
+        );
+
+      case "pending_received":
+        return (
+          <Button
+            size="sm"
+            variant="default"
+            onClick={() => handleAcceptInvite(user._id, user.invitationId)}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                <Check className="h-4 w-4 mr-1" />
+                Accept
+              </>
+            )}
+          </Button>
+        );
+
+      default:
+        return (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => handleSendInvite(user._id)}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                <UserPlus className="h-4 w-4 mr-1" />
+                Invite
+              </>
+            )}
+          </Button>
+        );
     }
   };
 
@@ -77,7 +231,7 @@ export default function UserSearchDialog({
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>New Chat</DialogTitle>
+          <DialogTitle>Search Users</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div className="relative">
@@ -98,10 +252,9 @@ export default function UserSearchDialog({
             ) : users.length > 0 ? (
               <div className="space-y-2">
                 {users.map((user) => (
-                  <button
+                  <div
                     key={user._id}
-                    onClick={() => handleSelect(user._id)}
-                    className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-muted transition-colors text-left"
+                    className="w-full flex items-center gap-3 p-2 rounded-lg border bg-card"
                   >
                     <Avatar className="h-10 w-10">
                       <AvatarImage src={user.image} />
@@ -117,7 +270,8 @@ export default function UserSearchDialog({
                         {user.email}
                       </p>
                     </div>
-                  </button>
+                    {renderActionButton(user)}
+                  </div>
                 ))}
               </div>
             ) : query.length >= 2 ? (
