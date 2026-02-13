@@ -63,12 +63,10 @@ export default function SettingsPage() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Profile Tab */}
         <TabsContent value="profile" className="space-y-6">
           <Profile />
         </TabsContent>
 
-        {/* Notifications Tab */}
         <TabsContent value="notifications" className="space-y-6">
           <Card className="border-border/50 bg-card opacity-0 animate-fade-in">
             <CardHeader>
@@ -129,7 +127,6 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
 
-        {/* Security Tab */}
         <TabsContent value="security" className="space-y-6">
           <Card className="border-border/50 bg-card opacity-0 animate-fade-in">
             <CardHeader>
@@ -160,7 +157,6 @@ export default function SettingsPage() {
 
               <Separator className="bg-border" />
 
-              {/* Active Sessions */}
               <div className="space-y-4">
                 <h3 className="font-medium text-foreground">Active Sessions</h3>
                 {[
@@ -216,7 +212,6 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
 
-        {/* Billing Tab */}
         <TabsContent value="billing" className="space-y-6">
           <Card className="border-border/50 bg-card opacity-0 animate-fade-in">
             <CardHeader>
@@ -298,7 +293,6 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              {/* Billing History */}
               <div className="space-y-4">
                 <h3 className="font-medium text-foreground">Billing History</h3>
                 {[
@@ -340,7 +334,6 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
 
-        {/* Account Tab */}
         <TabsContent value="appearance" className="space-y-6">
           <Card
             className="border-destructive/30 bg-destructive/5 opacity-0 animate-fade-in"

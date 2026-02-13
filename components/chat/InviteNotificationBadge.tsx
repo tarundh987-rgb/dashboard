@@ -1,9 +1,6 @@
 "use client";
-
-import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Bell } from "lucide-react";
-import axios from "axios";
 import { Badge } from "@/components/ui/badge";
 
 interface InviteNotificationBadgeProps {

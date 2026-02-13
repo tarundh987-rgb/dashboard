@@ -1,6 +1,5 @@
 import { ChatSidebar } from "@/components/chat/ChatSidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { Separator } from "@/components/ui/separator";
 import ChatHeader from "@/components/chat/ChatHeader";
 
 export default function ChatLayout({

@@ -22,7 +22,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Verify user is part of the conversation
     const conversation = await Conversation.findOne({
       _id: conversationId,
       participants: userId,

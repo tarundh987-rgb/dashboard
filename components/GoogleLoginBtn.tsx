@@ -3,7 +3,6 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useAppDispatch } from "@/redux/hooks";
 import { googleLogin, setUser } from "@/redux/features/auth/authSlice";
-import Image from "next/image";
 
 export default function GoogleLoginBtn() {
   const dispatch = useAppDispatch();
@@ -18,11 +17,13 @@ export default function GoogleLoginBtn() {
         }
 
         try {
-          const response = await dispatch(googleLogin({ token: res.credential })).unwrap();
-          
+          const response = await dispatch(
+            googleLogin({ token: res.credential }),
+          ).unwrap();
+
           // Extract user data from response
           const userData = response.data || response;
-          
+
           // Dispatch setUser to store user data
           dispatch(setUser(userData));
 

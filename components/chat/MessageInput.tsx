@@ -35,7 +35,6 @@ export default function MessageInput({
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setMessage(e.target.value);
 
-    // Handle typing indicator
     onTyping(true);
 
     if (typingTimeoutRef.current) {
@@ -68,7 +67,6 @@ export default function MessageInput({
       if (file.type.startsWith("image/")) {
         reader.readAsDataURL(file);
       } else {
-        // For non-images, just store the object URL for consistency or use a placeholder
         setPreviews((prev) => [
           ...prev,
           {
@@ -80,7 +78,6 @@ export default function MessageInput({
       }
     });
 
-    // Reset file input
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -103,7 +100,6 @@ export default function MessageInput({
 
       let attachments: any[] = [];
 
-      // 1. Upload files if any
       if (selectedFiles.length > 0) {
         const formData = new FormData();
         selectedFiles.forEach((file) => {
@@ -117,7 +113,6 @@ export default function MessageInput({
         attachments = uploadRes.data.data;
       }
 
-      // 2. Send message with attachments
       await onSendMessage(message, attachments);
 
       setMessage("");
@@ -132,7 +127,6 @@ export default function MessageInput({
 
   return (
     <div className="flex flex-col gap-2">
-      {/* File Previews */}
       {previews.length > 0 && (
         <div className="flex flex-wrap gap-2 p-2 bg-background/40 backdrop-blur-md border border-border/40 rounded-xl overflow-x-auto max-h-32">
           {previews.map((preview, index) => (
