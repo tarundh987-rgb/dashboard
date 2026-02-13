@@ -17,8 +17,12 @@ import { Textarea } from "./ui/textarea";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
-import { updateUser } from "@/redux/features/auth/authSlice";
-import { setUser } from "@/redux/features/auth/authSlice";
+import {
+  updateUser,
+  updateProfileImage,
+  setUser,
+} from "@/redux/features/auth/authSlice";
+import { useRef } from "react";
 import { toast } from "sonner";
 import { updateSchema } from "@/verification/auth.verification";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
@@ -36,6 +40,9 @@ export default function Profile() {
     email: "",
     dateOfBirth: undefined as Date | undefined,
   });
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (user) {
@@ -76,6 +83,38 @@ export default function Profile() {
     }
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith("image/")) {
+        toast.error("Please select an image file");
+        return;
+      }
+      setSelectedFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleImageUpload = async () => {
+    if (!selectedFile) return;
+
+    const formData = new FormData();
+    formData.append("file", selectedFile);
+
+    try {
+      await dispatch(updateProfileImage(formData)).unwrap();
+      toast.success("Profile image updated successfully");
+      setSelectedFile(null);
+      setPreviewImage(null);
+    } catch (err: any) {
+      toast.error(err?.message || "Image upload failed");
+    }
+  };
+
   return (
     <Card className="border-border/50 bg-card opacity-0 animate-fade-in">
       <CardHeader>
@@ -86,25 +125,65 @@ export default function Profile() {
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="flex items-center gap-6">
-          <div className="relative">
-            <Avatar className="h-24 w-24">
-              <AvatarImage src="/man.png" />
+          <div className="relative group">
+            <Avatar className="h-24 w-24 border-2 border-border group-hover:border-primary transition-colors">
+              <AvatarImage
+                src={previewImage || user?.image || "/man.png"}
+                className="object-cover"
+              />
               <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
-                JD
+                {user?.firstName?.[0]}
+                {user?.lastName?.[0] || "U"}
               </AvatarFallback>
             </Avatar>
-            <button className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 transition-colors">
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              ref={fileInputRef}
+              onChange={handleImageChange}
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 transition-transform hover:scale-110 shadow-lg cursor-pointer"
+            >
               <Camera className="h-4 w-4" />
             </button>
           </div>
-          <div>
-            <h3 className="font-semibold text-foreground">
+          <div className="flex-1">
+            <h3 className="font-semibold text-foreground text-lg">
               {user?.firstName} {user?.lastName}
             </h3>
-            <p className="text-sm text-muted-foreground">{user?.email}</p>
-            <Badge className="mt-2 bg-primary/20 text-primary">
-              {user?.role}
-            </Badge>
+            <p className="text-sm text-muted-foreground mb-4">{user?.email}</p>
+            {selectedFile && (
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  onClick={handleImageUpload}
+                  disabled={isLoading}
+                  className="h-8 px-3"
+                >
+                  {isLoading ? "Uploading..." : "Save Photo"}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setSelectedFile(null);
+                    setPreviewImage(null);
+                  }}
+                  disabled={isLoading}
+                  className="h-8 px-3"
+                >
+                  Cancel
+                </Button>
+              </div>
+            )}
+            {!selectedFile && (
+              <Badge className="bg-primary/20 text-primary border-none">
+                {user?.role}
+              </Badge>
+            )}
           </div>
         </div>
 

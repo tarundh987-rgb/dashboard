@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useSocket } from "@/components/SocketProvider";
-import { Avatar } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import {
   SidebarMenu,
@@ -110,9 +110,13 @@ export default function ConversationList({
               <Link href={"/"}>
                 <div className="relative">
                   <Avatar className="h-8 w-8 shrink-0">
-                    <div className="h-full w-full bg-accent/80 flex items-center justify-center text-sm font-semibold">
+                    <AvatarImage
+                      src={otherUser?.image || ""}
+                      className="object-cover"
+                    />
+                    <AvatarFallback className="bg-accent/80 flex items-center justify-center text-xs font-semibold">
                       {avatarFallback}
-                    </div>
+                    </AvatarFallback>
                   </Avatar>
                   {isOnline && (
                     <div className="absolute bottom-0 right-0 h-2.5 w-2.5 bg-green-500 rounded-full border-2 border-background" />

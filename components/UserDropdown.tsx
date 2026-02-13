@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { clearUser, logout } from "@/redux/features/auth/authSlice";
 import { useAppDispatch } from "@/redux/hooks";
 import { useRouter } from "next/navigation";
+import { Avatar, AvatarImage } from "./ui/avatar";
 
 export default function UserDropdown() {
   const user = useSelector((state: RootState) => state.auth.user);
@@ -51,25 +52,23 @@ export default function UserDropdown() {
           variant="ghost"
           className="relative h-10 w-10 rounded-full p-0 cursor-pointer"
         >
-          <Image
-            src="/man.png"
-            alt="Profile"
-            width={40}
-            height={40}
-            className="rounded-full object-cover"
-          />
+          <Avatar className="h-8 w-8 shrink-0 border border-border">
+            <AvatarImage
+              src={user?.image || "/man.png"}
+              className="object-cover "
+            />
+          </Avatar>
         </Button>
       </DropdownMenuTrigger>
 
       <DropdownMenuContent className="w-64" align="end" sideOffset={8}>
         <DropdownMenuLabel className="flex gap-3">
-          <Image
-            src="/man.png"
-            alt="Profile"
-            width={44}
-            height={44}
-            className="rounded-full object-cover"
-          />
+          <Avatar className="h-8 w-8 shrink-0">
+            <AvatarImage
+              src={user?.image || "/man.png"}
+              className="object-cover"
+            />
+          </Avatar>
           <div className="flex flex-col">
             <span className="font-medium">
               {user?.firstName} {user?.lastName}

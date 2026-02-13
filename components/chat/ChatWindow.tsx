@@ -138,22 +138,19 @@ export default function ChatWindow({ conversationId }: ChatWindowProps) {
 
   const handleSendMessage = async (text: string) => {
     try {
-      // 1. Call API
       const res = await axios.post(
         `/api/conversations/${conversationId}/messages`,
         { text },
       );
       const newMessage = res.data.data;
 
-      // 2. Update Local UI immediately
       setMessages((prev) => [...prev, newMessage]);
       setTimeout(scrollToBottom, 50);
 
-      // 3. Emit to Socket for others
       if (socket && isConnected) {
         socket.emit("send_message", {
           conversationId,
-          message: newMessage, // This has populated sender
+          message: newMessage,
         });
       }
     } catch (error) {
@@ -217,12 +214,6 @@ export default function ChatWindow({ conversationId }: ChatWindowProps) {
                   "?"}
             </AvatarFallback>
           </Avatar>
-          {isOnline && (
-            <span className="relative flex h-3 w-3 absolute bottom-0 right-0 -mr-0.5 -mb-0.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500 border-2 border-background"></span>
-            </span>
-          )}
         </div>
         <div className="flex flex-col">
           <h2 className="font-semibold text-sm leading-tight tracking-tight">
