@@ -34,10 +34,6 @@ const nav = {
       url: "/dashboard/admin-users",
     },
     {
-      title: "Messages",
-      url: "/",
-    },
-    {
       title: "Settings",
       url: "/dashboard/settings",
     },
@@ -55,8 +51,6 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
     >
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>{nav.title}</SidebarGroupLabel>
-
           <SidebarMenu>
             {nav.items.map((item) => {
               const isActive =

@@ -42,18 +42,12 @@ export function ChatSidebar(props: React.ComponentProps<typeof Sidebar>) {
             <SidebarGroupLabel className="text-sm font-semibold text-sidebar-foreground uppercase tracking-wider">
               Messages
             </SidebarGroupLabel>
-            <div className="flex items-center gap-1">
-              <GroupChatModal
-                onSelectConversation={(conversationId: string) => {
-                  dispatch(selectConversation(conversationId));
-                }}
-              />
-              <UserSearchDialog
-                onSelectUser={(conversationId: string) => {
-                  dispatch(selectConversation(conversationId));
-                }}
-              />
-            </div>
+
+            <UserSearchDialog
+              onSelectUser={(conversationId: string) => {
+                dispatch(selectConversation(conversationId));
+              }}
+            />
           </div>
           <SidebarMenu className="px-2 py-2">
             <ConversationList
@@ -66,6 +60,11 @@ export function ChatSidebar(props: React.ComponentProps<typeof Sidebar>) {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
+            <GroupChatModal
+              onSelectConversation={(conversationId: string) => {
+                dispatch(selectConversation(conversationId));
+              }}
+            />
             <SidebarMenuButton asChild className="bg-accent hover:bg-accent/70">
               <Link href="/settings">
                 <Settings />

@@ -17,11 +17,6 @@ import axios from "axios";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 interface User {
   _id: string;
@@ -110,18 +105,16 @@ export default function GroupChatModal({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <DialogTrigger asChild>
-            <Button size="sm" variant="outline" className="cursor-pointer">
-              <UsersIcon className="h-4 w-4" />
-            </Button>
-          </DialogTrigger>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>New Group Chat</p>
-        </TooltipContent>
-      </Tooltip>
+      <DialogTrigger asChild>
+        <Button
+          size="sm"
+          variant="secondary"
+          className="cursor-pointer w-full justify-start mb-1"
+        >
+          <UsersIcon className="h-4 w-4" />
+          <span>New Group Chat</span>
+        </Button>
+      </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Create Group Chat</DialogTitle>

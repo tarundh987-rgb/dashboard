@@ -16,12 +16,9 @@ export default function ChatHeader() {
           href="/"
           className="flex items-center gap-2 hover:opacity-80 transition-opacity"
         >
-          <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground font-bold">R</span>
-          </div>
           <span className="font-bold text-lg hidden md:block">Redux Auth</span>
         </Link>
-        <SidebarTrigger className="ml-1.5" />
+        <SidebarTrigger className="ml-11.5 cursor-pointer" />
         <div className="h-6 w-px bg-border mx-2 hidden md:block" />
         <span className="text-sm font-medium text-muted-foreground hidden sm:block">
           {user ? (

@@ -10,16 +10,10 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Loader2 } from "lucide-react";
+import { Search, Loader2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import axios from "axios";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 interface User {
   _id: string;
@@ -76,18 +70,11 @@ export default function UserSearchDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <DialogTrigger asChild>
-            <Button size="sm" variant="outline" className="cursor-pointer">
-              <Plus className="h-4 w-4" />
-            </Button>
-          </DialogTrigger>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>New Chat</p>
-        </TooltipContent>
-      </Tooltip>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="secondary" className="cursor-pointer">
+          <Search className="h-4 w-4" />
+        </Button>
+      </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>New Chat</DialogTitle>
