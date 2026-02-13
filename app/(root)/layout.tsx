@@ -10,19 +10,16 @@ export default function ChatLayout({
 }>) {
   return (
     <SidebarProvider className="flex flex-col">
-      <nav className="sticky top-0 z-50 p-2 shrink-0 flex items-center w-full bg-background/95 backdrop-blur-md border-b">
+      <nav className="sticky top-0 z-50 p-2 shrink-0 flex items-center w-full bg-background">
         <div className="flex items-center gap-2 w-full px-2">
-          <Separator
-            orientation="vertical"
-            className="mr-2 h-4 hidden md:block"
-          />
           <ChatHeader />
         </div>
+        <div className="pointer-events-none absolute -bottom-2 left-0 w-full h-2 bg-linear-to-b from-background to-transparent" />
       </nav>
       <div className="flex flex-1 overflow-hidden h-[calc(100vh-4rem)]">
         <ChatSidebar />
         <SidebarInset className="flex-1 overflow-hidden">
-          <div className="flex flex-1 flex-col h-full px-2">{children}</div>
+          <div className="flex flex-1 flex-col h-full mt-3">{children}</div>
         </SidebarInset>
       </div>
     </SidebarProvider>

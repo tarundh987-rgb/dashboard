@@ -56,7 +56,6 @@ export default function ChatWindow({ conversationId }: ChatWindowProps) {
     });
   }, [socket]);
 
-  // Fetch messages when conversation changes
   useEffect(() => {
     const fetchMessages = async () => {
       setLoading(true);
@@ -127,7 +126,6 @@ export default function ChatWindow({ conversationId }: ChatWindowProps) {
     };
   }, [socket, isConnected, conversationId]);
 
-  // Scroll to bottom on load and new messages
   useEffect(() => {
     scrollToBottom();
   }, [messages, loading]);
@@ -206,12 +204,12 @@ export default function ChatWindow({ conversationId }: ChatWindowProps) {
     !details.isGroup && otherUser?._id && onlineUsers.has(otherUser._id);
 
   return (
-    <div className="flex flex-col h-full bg-muted/20">
-      <div className="border-b border-border bg-background/50 backdrop-blur-sm p-3 flex items-center gap-3 shadow-sm z-10">
+    <div className="relative flex flex-col h-full w-full bg-transparent overflow-hidden">
+      <div className="absolute left-4 right-4 z-20 border border-border/40 bg-background/60 backdrop-blur-md p-3 flex items-center gap-3 shadow-sm rounded-2xl transition-all duration-300 hover:bg-background/80 hover:shadow-md">
         <div className="relative">
-          <Avatar className="h-10 w-10 border border-border">
-            <AvatarImage src={details.image || ""} />
-            <AvatarFallback className="bg-primary/10 text-primary">
+          <Avatar className="h-10 w-10 border border-border/50 shadow-sm">
+            <AvatarImage src={details.image || ""} className="object-cover" />
+            <AvatarFallback className="bg-linear-to-br from-primary/20 to-primary/5 text-primary font-medium">
               {details.isGroup
                 ? details.name?.[0]?.toUpperCase()
                 : details.firstName?.[0] ||
@@ -220,21 +218,28 @@ export default function ChatWindow({ conversationId }: ChatWindowProps) {
             </AvatarFallback>
           </Avatar>
           {isOnline && (
-            <div className="absolute bottom-0 right-0 h-2.5 w-2.5 bg-green-500 rounded-full border-2 border-background" />
+            <span className="relative flex h-3 w-3 absolute bottom-0 right-0 -mr-0.5 -mb-0.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500 border-2 border-background"></span>
+            </span>
           )}
         </div>
         <div className="flex flex-col">
-          <h2 className="font-semibold text-sm leading-tight">
+          <h2 className="font-semibold text-sm leading-tight tracking-tight">
             {details.name}
           </h2>
           {details.isGroup ? (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-muted-foreground/80">
               {conversation?.participants.length} members
             </span>
           ) : (
-            <span className="text-xs text-muted-foreground flex items-center gap-1">
+            <span className="text-xs text-muted-foreground/80 flex items-center gap-1.5">
               <div
-                className={`h-1.5 w-1.5 rounded-full ${isOnline ? "bg-green-500" : "bg-gray-400"}`}
+                className={`h-1.5 w-1.5 rounded-full ${
+                  isOnline
+                    ? "bg-green-500 shadow-[0_0_4px_rgba(34,197,94,0.5)]"
+                    : "bg-muted-foreground/40"
+                }`}
               />
               {isOnline ? "Online" : "Offline"}
             </span>
@@ -242,47 +247,59 @@ export default function ChatWindow({ conversationId }: ChatWindowProps) {
         </div>
       </div>
 
-      <ScrollArea className="flex-1 p-4">
-        <div className="flex flex-col gap-4">
+      <ScrollArea className="flex-1 h-full w-full">
+        <div className="flex flex-col gap-4 pt-24 pb-28 px-4 sm:px-6">
           {messages.map((msg, index) => {
             const isMe =
               msg.sender?._id === currentUser?._id ||
               msg.sender === currentUser?._id;
+            const isPrevFromSame =
+              index > 0 &&
+              (messages[index - 1].sender?._id === msg.sender?._id ||
+                messages[index - 1].sender === msg.sender);
+
             return (
               <div
                 key={msg._id}
-                className={`flex gap-3 max-w-[80%] ${
+                className={`flex gap-3 max-w-[85%] md:max-w-[70%] group ${
                   isMe ? "ml-auto flex-row-reverse" : ""
-                }`}
+                } ${!isPrevFromSame ? "mt-2" : "mt-0.5"}`}
               >
-                {!isMe && (
-                  <Avatar className="h-8 w-8 mt-1 border border-border">
+                {!isMe && !isPrevFromSame ? (
+                  <Avatar className="h-8 w-8 mt-1 border border-border/40 shadow-sm shrink-0">
                     <AvatarImage
                       src={
                         typeof msg.sender === "object" ? msg.sender.image : ""
                       }
+                      className="object-cover"
                     />
-                    <AvatarFallback>
+                    <AvatarFallback className="text-[10px] bg-muted">
                       {typeof msg.sender === "object" && msg.sender.firstName
                         ? msg.sender.firstName[0]
                         : "?"}
                     </AvatarFallback>
                   </Avatar>
-                )}
+                ) : !isMe ? (
+                  <div className="w-8 shrink-0" />
+                ) : null}
 
                 <div
-                  className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}
+                  className={`flex flex-col ${
+                    isMe ? "items-end" : "items-start"
+                  }`}
                 >
                   <div
-                    className={`px-4 py-2 rounded-2xl text-sm shadow-sm ${
+                    className={`px-5 py-2.5 text-sm shadow-sm backdrop-blur-sm transition-all duration-200 ${
                       isMe
-                        ? "bg-primary text-primary-foreground rounded-tr-sm"
-                        : "bg-background border border-border rounded-tl-sm text-foreground"
+                        ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-sm hover:brightness-110"
+                        : "bg-card border border-border/50 text-card-foreground rounded-2xl rounded-tl-sm hover:bg-accent/50"
                     }`}
                   >
                     {msg.text}
                   </div>
-                  <span className="text-[10px] text-muted-foreground mt-1 px-1 opacity-70">
+                  <span
+                    className={`text-[10px] text-muted-foreground/60 mt-1 px-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${isMe ? "text-right" : "text-left"}`}
+                  >
                     {format(new Date(msg.createdAt), "p")}
                   </span>
                 </div>
@@ -294,12 +311,17 @@ export default function ChatWindow({ conversationId }: ChatWindowProps) {
       </ScrollArea>
 
       {typingUsers.size > 0 && (
-        <div className="px-4 py-2 text-xs text-muted-foreground italic">
-          Someone is typing...
+        <div className="absolute bottom-24 left-8 z-10 px-3 py-1.5 rounded-full bg-background/80 backdrop-blur-sm border border-border/40 text-xs text-muted-foreground shadow-sm animate-in fade-in slide-in-from-bottom-2">
+          <span className="animate-pulse">Typing...</span>
         </div>
       )}
 
-      <MessageInput onSendMessage={handleSendMessage} onTyping={handleTyping} />
+      <div className="absolute bottom-4 left-4 right-4 z-20">
+        <MessageInput
+          onSendMessage={handleSendMessage}
+          onTyping={handleTyping}
+        />
+      </div>
     </div>
   );
 }

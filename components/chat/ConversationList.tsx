@@ -4,8 +4,12 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { useSocket } from "@/components/SocketProvider";
 import { Avatar } from "@/components/ui/avatar";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import {
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@/components/ui/sidebar";
 
 interface Conversation {
   _id: string;
@@ -81,7 +85,7 @@ export default function ConversationList({
   };
 
   return (
-    <ScrollArea className="flex-1">
+    <SidebarMenu className="mt-2">
       {conversations.map((conversation) => {
         const otherUser = getOtherParticipant(conversation);
         const isSelected = selectedConversationId === conversation._id;
@@ -96,35 +100,34 @@ export default function ConversationList({
           !isGroup && otherUser?._id && onlineUsers.has(otherUser._id);
 
         return (
-          <Link href={"/"} key={conversation._id}>
-            <button
+          <SidebarMenuItem key={conversation._id}>
+            <SidebarMenuButton
+              asChild
+              isActive={isSelected}
               onClick={() => onSelectConversation(conversation._id)}
-              className={cn(
-                "w-full p-2 text-left hover:bg-accent/50 hover:text-accent-foreground cursor-pointer transition-colors rounded-lg",
-                isSelected && "bg-primary/70 text-primary-foreground",
-              )}
+              className="h-auto py-3 cursor-pointer"
             >
-              <div className="flex items-start justify-center gap-3 ">
+              <Link href={"/"}>
                 <div className="relative">
-                  <Avatar className="h-6 w-6 shrink-0">
+                  <Avatar className="h-8 w-8 shrink-0">
                     <div className="h-full w-full bg-accent/80 flex items-center justify-center text-sm font-semibold">
                       {avatarFallback}
                     </div>
                   </Avatar>
                   {isOnline && (
-                    <div className="absolute bottom-0 right-0 h-2 w-2 bg-green-500 rounded-full border border-background" />
+                    <div className="absolute bottom-0 right-0 h-2.5 w-2.5 bg-green-500 rounded-full border-2 border-background" />
                   )}
                 </div>
-                <div className="flex-1">
-                  <p className="font-medium truncate">
+                <div className="flex-1 overflow-hidden">
+                  <span className="font-medium truncate block">
                     {name} {!isGroup && otherUser?.lastName}
-                  </p>
+                  </span>
                 </div>
-              </div>
-            </button>
-          </Link>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
         );
       })}
-    </ScrollArea>
+    </SidebarMenu>
   );
 }

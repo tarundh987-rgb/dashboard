@@ -10,7 +10,7 @@ export default function MessagesPage() {
   );
 
   return (
-    <div className="flex-1 flex flex-col rounded-xl bg-accent/50 md:min-h-min mt-4 h-full">
+    <div className="flex-1 flex flex-col md:min-h-min h-full relative">
       {selectedConversationId ? (
         <ChatWindow conversationId={selectedConversationId} />
       ) : (

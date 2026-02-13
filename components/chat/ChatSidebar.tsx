@@ -15,54 +15,16 @@ import { Settings } from "lucide-react";
 import Link from "next/link";
 import ConversationList from "@/components/chat/ConversationList";
 import UserSearchDialog from "@/components/chat/UserSearchDialog";
-import InviteNotificationBadge from "@/components/chat/InviteNotificationBadge";
-import PendingInvitesDialog from "@/components/chat/PendingInvitesDialog";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
 import { selectConversation } from "@/redux/features/chat/chatSlice";
 import GroupChatModal from "./GroupChatModal";
-import axios from "axios";
-import { useSocket } from "@/components/SocketProvider";
 
 export function ChatSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const dispatch = useDispatch();
   const selectedConversationId = useSelector(
     (state: RootState) => state.chat.selectedConversationId,
   );
-  const [invitesDialogOpen, setInvitesDialogOpen] = React.useState(false);
-  const [inviteCount, setInviteCount] = React.useState(0);
-  const { socket } = useSocket();
-
-  React.useEffect(() => {
-    fetchPendingCount();
-
-    if (socket) {
-      socket.on("invite:received", () => {
-        setInviteCount((prev) => prev + 1);
-      });
-    }
-
-    return () => {
-      if (socket) {
-        socket.off("invite:received");
-      }
-    };
-  }, [socket]);
-
-  const fetchPendingCount = async () => {
-    try {
-      const res = await axios.get(
-        "/api/invitations?type=received&status=pending",
-      );
-      setInviteCount(res.data.data.length);
-    } catch (error) {
-      console.error("Error fetching pending invitations:", error);
-    }
-  };
-
-  const handleInviteAccepted = () => {
-    fetchPendingCount();
-  };
 
   const handleSelectConversation = (id: string) => {
     dispatch(selectConversation(id));
@@ -71,22 +33,18 @@ export function ChatSidebar(props: React.ComponentProps<typeof Sidebar>) {
   return (
     <>
       <Sidebar
-        variant="inset"
-        className="mt-15 h-[calc(100vh-4rem)] border-r border-border bg-sidebar/50 backdrop-blur-md"
+        variant="floating"
+        className="mt-15 h-[calc(100vh-4rem)]"
         {...props}
       >
         <SidebarContent>
           <SidebarGroup>
             <div className="flex items-center justify-between pb-3 border-b border-sidebar-border/50">
               <SidebarGroupLabel className="text-sm font-semibold text-sidebar-foreground uppercase tracking-wider">
-                Messages
+                USERS
               </SidebarGroupLabel>
 
               <div className="flex items-center gap-1">
-                <InviteNotificationBadge
-                  count={inviteCount}
-                  onClick={() => setInvitesDialogOpen(true)}
-                />
                 <UserSearchDialog
                   onSelectUser={(conversationId: string) => {
                     dispatch(selectConversation(conversationId));
@@ -94,12 +52,10 @@ export function ChatSidebar(props: React.ComponentProps<typeof Sidebar>) {
                 />
               </div>
             </div>
-            <SidebarMenu className="px-2 py-2">
-              <ConversationList
-                selectedConversationId={selectedConversationId}
-                onSelectConversation={handleSelectConversation}
-              />
-            </SidebarMenu>
+            <ConversationList
+              selectedConversationId={selectedConversationId}
+              onSelectConversation={handleSelectConversation}
+            />
           </SidebarGroup>
         </SidebarContent>
         <SidebarFooter>
@@ -110,10 +66,7 @@ export function ChatSidebar(props: React.ComponentProps<typeof Sidebar>) {
                   dispatch(selectConversation(conversationId));
                 }}
               />
-              <SidebarMenuButton
-                asChild
-                className="bg-accent hover:bg-accent/70"
-              >
+              <SidebarMenuButton asChild variant="outline">
                 <Link href="/settings">
                   <Settings />
                   <span>Settings</span>
@@ -123,11 +76,6 @@ export function ChatSidebar(props: React.ComponentProps<typeof Sidebar>) {
           </SidebarMenu>
         </SidebarFooter>
       </Sidebar>
-      <PendingInvitesDialog
-        open={invitesDialogOpen}
-        onOpenChange={setInvitesDialogOpen}
-        onInviteAccepted={handleInviteAccepted}
-      />
     </>
   );
 }

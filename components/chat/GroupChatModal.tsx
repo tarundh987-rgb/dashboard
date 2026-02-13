@@ -108,8 +108,8 @@ export default function GroupChatModal({
       <DialogTrigger asChild>
         <Button
           size="sm"
-          variant="secondary"
-          className="cursor-pointer w-full justify-start mb-1"
+          variant="outline"
+          className="cursor-pointer w-full justify-start mb-1 border-none"
         >
           <UsersIcon className="h-4 w-4" />
           <span>New Group Chat</span>
