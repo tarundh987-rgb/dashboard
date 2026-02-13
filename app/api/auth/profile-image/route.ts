@@ -34,14 +34,10 @@ export const PATCH = withApiHandler(async (req: NextRequest) => {
     await deleteFile(user.image);
   }
 
-  const imageUrl = await saveFile(file);
+  const { url } = await saveFile(file);
 
-  user.image = imageUrl;
+  user.image = url;
   await user.save();
 
-  return apiSuccess(
-    200,
-    { image: imageUrl },
-    "Profile image updated successfully",
-  );
+  return apiSuccess(200, { image: url }, "Profile image updated successfully");
 });

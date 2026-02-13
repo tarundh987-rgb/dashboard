@@ -2,7 +2,12 @@ import { writeFile, mkdir, unlink, stat } from "fs/promises";
 import { join } from "path";
 import { randomUUID } from "crypto";
 
-export async function saveFile(file: File): Promise<string> {
+export async function saveFile(file: File): Promise<{
+  url: string;
+  name: string;
+  type: string;
+  size: number;
+}> {
   try {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
@@ -17,7 +22,12 @@ export async function saveFile(file: File): Promise<string> {
     const filePath = join(uploadDir, uniqueName);
     await writeFile(filePath, buffer);
 
-    return `/api/file/${uniqueName}`;
+    return {
+      url: `/api/file/${uniqueName}`,
+      name: file.name,
+      type: file.type || "application/octet-stream",
+      size: file.size,
+    };
   } catch (error) {
     console.error("Error saving file:", error);
     throw new Error("Failed to save file");

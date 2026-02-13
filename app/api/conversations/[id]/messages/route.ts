@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import { Message, Conversation } from "@/models";
 
-// GET: Fetch messages for a conversation
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -68,18 +67,20 @@ export async function POST(
     const { id } = await params;
     const conversationId = id;
     const body = await req.json();
-    const { text } = body;
+    const { text, attachments } = body;
+    const hasText = text && text.trim() !== "";
+    const hasAttachments =
+      attachments && Array.isArray(attachments) && attachments.length > 0;
 
-    if (!text || text.trim() === "") {
+    if (!hasText && !hasAttachments) {
       return NextResponse.json(
-        { message: "Message text is required" },
+        { message: "Message text or attachments are required" },
         { status: 400 },
       );
     }
 
     await dbConnect();
 
-    // Verify user is part of the conversation
     const conversation = await Conversation.findOne({
       _id: conversationId,
       participants: userId,
@@ -92,14 +93,13 @@ export async function POST(
       );
     }
 
-    // Create message
     const message = await Message.create({
       conversationId,
       sender: userId,
-      text: text.trim(),
+      text: text?.trim() || "",
+      attachments: attachments || [],
     });
 
-    // Update conversation's last message
     await Conversation.findByIdAndUpdate(conversationId, {
       lastMessage: message._id,
     });

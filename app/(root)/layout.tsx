@@ -19,7 +19,7 @@ export default function ChatLayout({
       <div className="flex flex-1 overflow-hidden h-[calc(100vh-4rem)]">
         <ChatSidebar />
         <SidebarInset className="flex-1 overflow-hidden">
-          <div className="flex flex-1 flex-col h-full mt-3">{children}</div>
+          <div className="flex flex-1 flex-col h-full">{children}</div>
         </SidebarInset>
       </div>
     </SidebarProvider>

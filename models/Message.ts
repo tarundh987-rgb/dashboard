@@ -12,7 +12,7 @@ const messageSchema = new mongoose.Schema(
     },
     text: {
       type: String,
-      required: true,
+      default: "",
     },
     isRead: {
       type: Boolean,
@@ -21,9 +21,20 @@ const messageSchema = new mongoose.Schema(
     readAt: {
       type: Date,
     },
+    attachments: [
+      {
+        url: { type: String, required: true },
+        name: { type: String, required: true },
+        type: { type: String, required: true },
+        size: { type: Number, required: true },
+      },
+    ],
   },
   { timestamps: true },
 );
 
-export default mongoose.models.Message ||
-  mongoose.model("Message", messageSchema);
+if (mongoose.models.Message) {
+  delete (mongoose.models as any).Message;
+}
+
+export default mongoose.model("Message", messageSchema);

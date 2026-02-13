@@ -109,7 +109,7 @@ export default function ConversationList({
             >
               <Link href={"/"}>
                 <div className="relative">
-                  <Avatar className="h-8 w-8 shrink-0">
+                  <Avatar className="h-8 w-8 shrink-0 border border-border">
                     <AvatarImage
                       src={otherUser?.image || ""}
                       className="object-cover"

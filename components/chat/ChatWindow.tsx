@@ -6,9 +6,16 @@ import { useSocket } from "@/components/SocketProvider";
 import { useAppSelector } from "@/redux/hooks";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2 } from "lucide-react";
+import { Loader2, FileText, Download } from "lucide-react";
 import MessageInput from "./MessageInput";
 import { format } from "date-fns";
+
+interface Attachment {
+  url: string;
+  name: string;
+  type: string;
+  size: number;
+}
 
 interface Message {
   _id: string;
@@ -20,6 +27,7 @@ interface Message {
     image?: string;
   };
   text: string;
+  attachments?: Attachment[];
   createdAt: string;
   isRead: boolean;
 }
@@ -136,11 +144,14 @@ export default function ChatWindow({ conversationId }: ChatWindowProps) {
     }
   };
 
-  const handleSendMessage = async (text: string) => {
+  const handleSendMessage = async (
+    text: string,
+    attachments?: Attachment[],
+  ) => {
     try {
       const res = await axios.post(
         `/api/conversations/${conversationId}/messages`,
-        { text },
+        { text, attachments },
       );
       const newMessage = res.data.data;
 
@@ -201,8 +212,8 @@ export default function ChatWindow({ conversationId }: ChatWindowProps) {
     !details.isGroup && otherUser?._id && onlineUsers.has(otherUser._id);
 
   return (
-    <div className="relative flex flex-col h-full w-full bg-transparent overflow-hidden">
-      <div className="absolute left-4 right-4 z-20 border border-border/40 bg-background/60 backdrop-blur-md p-3 flex items-center gap-3 shadow-sm rounded-2xl transition-all duration-300 hover:bg-background/80 hover:shadow-md">
+    <div className="relative flex flex-col h-[calc(100vh-4rem)] w-full bg-transparent overflow-hidden">
+      <div className="absolute top-2.5 left-4 right-4 z-20 border border-border/40 bg-background/60 backdrop-blur-md p-3 flex items-center gap-3 shadow-sm rounded-2xl transition-all duration-300 hover:bg-background/80 hover:shadow-md">
         <div className="relative">
           <Avatar className="h-10 w-10 border border-border/50 shadow-sm">
             <AvatarImage src={details.image || ""} className="object-cover" />
@@ -286,7 +297,56 @@ export default function ChatWindow({ conversationId }: ChatWindowProps) {
                         : "bg-card border border-border/50 text-card-foreground rounded-2xl rounded-tl-sm hover:bg-accent/50"
                     }`}
                   >
-                    {msg.text}
+                    {msg.attachments && msg.attachments.length > 0 && (
+                      <div className="flex flex-col gap-2 mb-2">
+                        {msg.attachments.map((attachment, i) => (
+                          <div
+                            key={i}
+                            className="rounded-lg overflow-hidden border border-border/20 bg-background/5"
+                          >
+                            {attachment.type.startsWith("image/") ? (
+                              <img
+                                src={attachment.url}
+                                alt={attachment.name}
+                                className="max-w-full max-h-60 object-contain cursor-pointer transition-transform hover:scale-[1.02]"
+                                onClick={() =>
+                                  window.open(attachment.url, "_blank")
+                                }
+                              />
+                            ) : attachment.type.startsWith("video/") ? (
+                              <video
+                                src={attachment.url}
+                                controls
+                                className="max-w-full max-h-60 rounded-md"
+                              />
+                            ) : (
+                              <a
+                                href={attachment.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-3 p-3 bg-background transition-colors text-secondary"
+                              >
+                                <div className="h-10 w-10 flex items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                  <FileText className="h-5 w-5" />
+                                </div>
+                                <div className="flex flex-col min-w-0">
+                                  <span className="text-xs font-medium truncate">
+                                    {attachment.name}
+                                  </span>
+                                  <span className="text-[10px] opacity-70">
+                                    {(attachment.size / 1024).toFixed(1)} KB
+                                  </span>
+                                </div>
+                                <Download className="h-4 w-4 ml-auto opacity-0 group-hover/file:opacity-100 transition-opacity" />
+                              </a>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {msg.text && (
+                      <p className="whitespace-pre-wrap">{msg.text}</p>
+                    )}
                   </div>
                   <span
                     className={`text-[10px] text-muted-foreground/60 mt-1 px-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${isMe ? "text-right" : "text-left"}`}
@@ -307,8 +367,9 @@ export default function ChatWindow({ conversationId }: ChatWindowProps) {
         </div>
       )}
 
-      <div className="absolute bottom-4 left-4 right-4 z-20">
+      <div className="absolute bottom-1.5 left-4 right-4 z-20">
         <MessageInput
+          conversationId={conversationId}
           onSendMessage={handleSendMessage}
           onTyping={handleTyping}
         />

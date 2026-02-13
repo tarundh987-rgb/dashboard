@@ -3,20 +3,27 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Loader2 } from "lucide-react";
-
+import { Send, Loader2, Paperclip, X, File, Image, Film } from "lucide-react";
+import axios from "axios";
 interface MessageInputProps {
-  onSendMessage: (text: string) => Promise<void>;
+  conversationId: string;
+  onSendMessage: (text: string, attachments?: any[]) => Promise<void>;
   onTyping: (isTyping: boolean) => void;
 }
 
 export default function MessageInput({
+  conversationId,
   onSendMessage,
   onTyping,
 }: MessageInputProps) {
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [previews, setPreviews] = useState<
+    { url: string; type: string; name: string }[]
+  >([]);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -40,8 +47,52 @@ export default function MessageInput({
     }, 2000);
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    setSelectedFiles((prev) => [...prev, ...files]);
+
+    files.forEach((file) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviews((prev) => [
+          ...prev,
+          {
+            url: reader.result as string,
+            type: file.type,
+            name: file.name,
+          },
+        ]);
+      };
+      if (file.type.startsWith("image/")) {
+        reader.readAsDataURL(file);
+      } else {
+        // For non-images, just store the object URL for consistency or use a placeholder
+        setPreviews((prev) => [
+          ...prev,
+          {
+            url: URL.createObjectURL(file),
+            type: file.type,
+            name: file.name,
+          },
+        ]);
+      }
+    });
+
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+    setPreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const handleSend = async () => {
-    if (!message.trim() || isLoading) return;
+    if ((!message.trim() && selectedFiles.length === 0) || isLoading) return;
 
     setIsLoading(true);
     try {
@@ -49,8 +100,29 @@ export default function MessageInput({
         clearTimeout(typingTimeoutRef.current);
         onTyping(false);
       }
-      await onSendMessage(message);
+
+      let attachments: any[] = [];
+
+      // 1. Upload files if any
+      if (selectedFiles.length > 0) {
+        const formData = new FormData();
+        selectedFiles.forEach((file) => {
+          formData.append("files", file);
+        });
+
+        const uploadRes = await axios.post(
+          `/api/upload?conversationId=${conversationId}`,
+          formData,
+        );
+        attachments = uploadRes.data.data;
+      }
+
+      // 2. Send message with attachments
+      await onSendMessage(message, attachments);
+
       setMessage("");
+      setSelectedFiles([]);
+      setPreviews([]);
     } catch (error) {
       console.error("Failed to send message", error);
     } finally {
@@ -59,36 +131,92 @@ export default function MessageInput({
   };
 
   return (
-    <div className="bg-background/60 backdrop-blur-xl border border-border/40 rounded-2xl p-2 shadow-sm transition-all duration-300 focus-within:shadow-md focus-within:bg-background/80">
-      <div className="flex items-end gap-2">
-        <Textarea
-          value={message}
-          onChange={handleChange}
-          onKeyDown={handleKeyDown}
-          placeholder="Type a message..."
-          className="min-h-[20px] max-h-[150px] resize-none border-0 focus-visible:ring-0 bg-transparent py-3 px-3 shadow-none text-sm placeholder:text-muted-foreground/70"
-          disabled={isLoading}
-          rows={1}
-          style={{ height: "auto", minHeight: "44px" }}
-          onInput={(e) => {
-            const target = e.target as HTMLTextAreaElement;
-            target.style.height = "auto";
-            target.style.height = `${Math.min(target.scrollHeight, 150)}px`;
-          }}
-        />
-        <Button
-          onClick={handleSend}
-          disabled={!message.trim() || isLoading}
-          size="icon"
-          className="mb-1 h-9 w-9 shrink-0 rounded-xl transition-all duration-200"
-        >
-          {isLoading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Send className="h-4 w-4" />
-          )}
-          <span className="sr-only">Send</span>
-        </Button>
+    <div className="flex flex-col gap-2">
+      {/* File Previews */}
+      {previews.length > 0 && (
+        <div className="flex flex-wrap gap-2 p-2 bg-background/40 backdrop-blur-md border border-border/40 rounded-xl overflow-x-auto max-h-32">
+          {previews.map((preview, index) => (
+            <div
+              key={index}
+              className="relative group w-20 h-20 rounded-lg overflow-hidden border border-border/50 bg-background/50"
+            >
+              {preview.type.startsWith("image/") ? (
+                <img
+                  src={preview.url}
+                  alt="preview"
+                  className="w-full h-full object-cover"
+                />
+              ) : preview.type.startsWith("video/") ? (
+                <div className="w-full h-full flex items-center justify-center bg-primary/10">
+                  <Film className="h-8 w-8 text-primary" />
+                </div>
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center p-1 text-[10px] text-center">
+                  <File className="h-8 w-8 text-muted-foreground mb-1" />
+                  <span className="truncate w-full">{preview.name}</span>
+                </div>
+              )}
+              <button
+                onClick={() => removeFile(index)}
+                className="absolute top-1 right-1 p-0.5 bg-background/80 rounded-full hover:bg-destructive hover:text-destructive-foreground transition-colors shadow-sm"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="bg-background/60 backdrop-blur-xl border border-border/40 rounded-2xl p-2 shadow-sm transition-all duration-300 focus-within:shadow-md focus-within:bg-background/80">
+        <div className="flex items-end gap-2">
+          <input
+            type="file"
+            multiple
+            className="hidden"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="mb-1 h-9 w-9 shrink-0 rounded-xl hover:bg-primary/10 hover:text-primary transition-all duration-200"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isLoading}
+          >
+            <Paperclip className="h-4 w-4" />
+          </Button>
+          <Textarea
+            value={message}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            placeholder="Type a message..."
+            className="min-h-[20px] max-h-[150px] resize-none border-0 focus-visible:ring-0 bg-transparent py-3 px-3 shadow-none text-sm placeholder:text-muted-foreground/70"
+            disabled={isLoading}
+            rows={1}
+            style={{ height: "auto", minHeight: "44px" }}
+            onInput={(e) => {
+              const target = e.target as HTMLTextAreaElement;
+              target.style.height = "auto";
+              target.style.height = `${Math.min(target.scrollHeight, 150)}px`;
+            }}
+          />
+          <Button
+            onClick={handleSend}
+            disabled={
+              (!message.trim() && selectedFiles.length === 0) || isLoading
+            }
+            size="icon"
+            className="mb-1 h-9 w-9 shrink-0 rounded-xl transition-all duration-200"
+          >
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
+            <span className="sr-only">Send</span>
+          </Button>
+        </div>
       </div>
     </div>
   );
