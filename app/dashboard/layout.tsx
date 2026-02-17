@@ -1,7 +1,8 @@
+"use client";
+
 import { AppSidebar } from "@/components/app-sidebar";
 import InviteNotifications from "@/components/InviteNotifications";
 import { ModeToggle } from "@/components/ModeToggle";
-
 import { Field } from "@/components/ui/field";
 import {
   InputGroup,
@@ -17,7 +18,7 @@ import UserDropdown from "@/components/UserDropdown";
 import { InfoIcon } from "lucide-react";
 import Link from "next/link";
 
-export default function DashBoardLayout({
+export default function DashboardLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
@@ -56,7 +57,7 @@ export default function DashBoardLayout({
         </nav>
         <div className="flex flex-1 my-1 px-2">
           <AppSidebar />
-          <SidebarInset className="flex-1 overflow-y-auto">
+          <SidebarInset className="flex-1 overflow-y-auto relative">
             {children}
           </SidebarInset>
         </div>

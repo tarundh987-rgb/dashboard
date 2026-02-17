@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/sonner";
 import AuthInitializer from "@/components/AuthInitializer";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { SocketProvider } from "@/components/SocketProvider";
+import { VoiceCallOverlay } from "@/components/chat/VoiceCallOverlay";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -46,6 +47,7 @@ export default function RootLayout({
               <SocketProvider>
                 <AuthInitializer />
                 {children}
+                <VoiceCallOverlay />
                 <Toaster position="top-right" richColors />
               </SocketProvider>
             </ReduxProvider>

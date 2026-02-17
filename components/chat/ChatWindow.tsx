@@ -6,9 +6,12 @@ import { useSocket } from "@/components/SocketProvider";
 import { useAppSelector } from "@/redux/hooks";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, FileText, Download } from "lucide-react";
+import { Loader2, FileText, Download, Phone } from "lucide-react";
 import MessageInput from "./MessageInput";
 import { format } from "date-fns";
+import { Button } from "@/components/ui/button";
+import { useAppDispatch } from "@/redux/hooks";
+import { initiateCall } from "@/redux/features/chat/callSlice";
 
 interface Attachment {
   url: string;
@@ -51,6 +54,7 @@ export default function ChatWindow({ conversationId }: ChatWindowProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const { socket, isConnected, onlineUsers } = useSocket();
   const currentUser = useAppSelector((state) => state.auth.user);
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
     if (!socket) return;
@@ -226,7 +230,7 @@ export default function ChatWindow({ conversationId }: ChatWindowProps) {
             </AvatarFallback>
           </Avatar>
         </div>
-        <div className="flex flex-col">
+        <div className="flex flex-col flex-1">
           <h2 className="font-semibold text-sm leading-tight tracking-tight">
             {details.name}
           </h2>
@@ -247,6 +251,35 @@ export default function ChatWindow({ conversationId }: ChatWindowProps) {
             </span>
           )}
         </div>
+        {!details.isGroup && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className={`rounded-full h-9 w-9 transition-colors ${isOnline ? "text-primary hover:bg-primary/10" : "text-muted-foreground/40 cursor-not-allowed"}`}
+            disabled={!isOnline}
+            onClick={() => {
+              if (otherUser && socket) {
+                dispatch(
+                  initiateCall({
+                    id: otherUser._id,
+                    name: details.name || "User",
+                    image: details.image,
+                  }),
+                );
+                socket.emit("call:initiate", {
+                  receiverId: otherUser._id,
+                  callerInfo: {
+                    name:
+                      currentUser?.firstName || currentUser?.email || "User",
+                    image: currentUser?.image,
+                  },
+                });
+              }
+            }}
+          >
+            <Phone className="h-5 w-5" />
+          </Button>
+        )}
       </div>
 
       <ScrollArea className="flex-1 h-full w-full">

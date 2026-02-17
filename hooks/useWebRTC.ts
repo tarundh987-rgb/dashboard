@@ -1,0 +1,221 @@
+"use client";
+
+import { useEffect, useRef, useCallback } from "react";
+import { useSocket } from "@/components/SocketProvider";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import {
+  acceptCall,
+  endCall,
+  incomingCall,
+  setError,
+} from "@/redux/features/chat/callSlice";
+
+export function useWebRTC() {
+  const { socket, isConnected } = useSocket();
+  const dispatch = useAppDispatch();
+  const { status, partner, isMuted } = useAppSelector((state) => state.call);
+  const currentUser = useAppSelector((state) => state.auth.user);
+
+  const pcRef = useRef<RTCPeerConnection | null>(null);
+  const localStreamRef = useRef<MediaStream | null>(null);
+  const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
+  const partnerRef = useRef(partner);
+
+  useEffect(() => {
+    partnerRef.current = partner;
+  }, [partner]);
+
+  // Initialize Peer Connection
+  const createPeerConnection = useCallback(() => {
+    if (pcRef.current) return pcRef.current;
+
+    const pc = new RTCPeerConnection({
+      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+    });
+
+    pc.onicecandidate = (event) => {
+      if (event.candidate && partnerRef.current?.id && socket) {
+        socket.emit("webrtc:ice-candidate", {
+          to: partnerRef.current.id,
+          candidate: event.candidate,
+        });
+      }
+    };
+
+    pc.ontrack = (event) => {
+      if (remoteAudioRef.current) {
+        remoteAudioRef.current.srcObject = event.streams[0];
+      }
+    };
+
+    pcRef.current = pc;
+    return pc;
+  }, [socket]);
+
+  // Cleanup
+  const cleanup = useCallback(() => {
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach((track) => track.stop());
+      localStreamRef.current = null;
+    }
+    if (pcRef.current) {
+      pcRef.current.close();
+      pcRef.current = null;
+    }
+    if (remoteAudioRef.current) {
+      remoteAudioRef.current.srcObject = null;
+    }
+  }, []);
+
+  // Set up signaling listeners
+  useEffect(() => {
+    if (!socket || !isConnected) return;
+
+    const handleIncomingCall = (data: any) => {
+      console.log("[useWebRTC] Incoming call data received:", data);
+      const { callerId, callerInfo } = data;
+
+      if (!callerInfo) {
+        console.error("[useWebRTC] Received call:incoming without callerInfo!");
+        return;
+      }
+
+      dispatch(
+        incomingCall({
+          id: callerId,
+          name: callerInfo.name || "Unknown User",
+          image: callerInfo.image,
+        }),
+      );
+    };
+
+    const handleCallAccepted = async (data: any) => {
+      console.log("[useWebRTC] Call accepted data received:", data);
+      const { receiverId, receiverInfo } = data;
+
+      dispatch(
+        acceptCall(
+          receiverInfo
+            ? {
+                id: receiverId,
+                name: receiverInfo.name,
+                image: receiverInfo.image,
+              }
+            : undefined,
+        ),
+      );
+
+      const pc = createPeerConnection();
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+        });
+        localStreamRef.current = stream;
+        stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+
+        socket.emit("webrtc:offer", { to: receiverId || partner?.id, offer });
+      } catch (err: any) {
+        console.error("Microphone access error:", err);
+        dispatch(
+          setError("Could not access microphone. Please check permissions."),
+        );
+        socket.emit("call:end", { to: receiverId || partner?.id });
+      }
+    };
+
+    const handleCallRejected = () => {
+      dispatch(setError("Call rejected"));
+      setTimeout(() => dispatch(endCall()), 3000);
+    };
+
+    const handleWebRTCOffer = async ({ from, offer }: any) => {
+      const pc = createPeerConnection();
+      try {
+        await pc.setRemoteDescription(new RTCSessionDescription(offer));
+
+        if (!localStreamRef.current) {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+          });
+          localStreamRef.current = stream;
+          stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+        }
+
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        socket.emit("webrtc:answer", { to: from, answer });
+      } catch (err) {
+        console.error("Error handling offer", err);
+        dispatch(setError("WebRTC handshake failed"));
+      }
+    };
+
+    const handleWebRTCAnswer = async ({ answer }: any) => {
+      if (pcRef.current) {
+        try {
+          await pcRef.current.setRemoteDescription(
+            new RTCSessionDescription(answer),
+          );
+        } catch (err) {
+          console.error("Error handling answer", err);
+          dispatch(setError("WebRTC handshake failed"));
+        }
+      }
+    };
+
+    const handleICECandidate = async ({ candidate }: any) => {
+      if (pcRef.current) {
+        await pcRef.current.addIceCandidate(new RTCIceCandidate(candidate));
+      }
+    };
+
+    const handleCallEnded = () => {
+      cleanup();
+      dispatch(endCall());
+    };
+
+    socket.on("call:incoming", handleIncomingCall);
+    socket.on("call:accepted", handleCallAccepted);
+    socket.on("call:rejected", handleCallRejected);
+    socket.on("webrtc:offer", handleWebRTCOffer);
+    socket.on("webrtc:answer", handleWebRTCAnswer);
+    socket.on("webrtc:ice-candidate", handleICECandidate);
+    socket.on("call:ended", handleCallEnded);
+
+    return () => {
+      socket.off("call:incoming", handleIncomingCall);
+      socket.off("call:accepted", handleCallAccepted);
+      socket.off("call:rejected", handleCallRejected);
+      socket.off("webrtc:offer", handleWebRTCOffer);
+      socket.off("webrtc:answer", handleWebRTCAnswer);
+      socket.off("webrtc:ice-candidate", handleICECandidate);
+      socket.off("call:ended", handleCallEnded);
+    };
+  }, [
+    socket,
+    isConnected,
+    dispatch,
+    createPeerConnection,
+    partner?.id,
+    cleanup,
+  ]);
+
+  // Mute control
+  useEffect(() => {
+    if (localStreamRef.current) {
+      localStreamRef.current.getAudioTracks().forEach((track) => {
+        track.enabled = !isMuted;
+      });
+    }
+  }, [isMuted]);
+
+  const toggleLocalMute = useCallback(() => {
+    // Logic is handled by the effect above through Redux
+  }, []);
+
+  return { remoteAudioRef, cleanup };
+}

@@ -139,6 +139,89 @@ app.prepare().then(() => {
       }
     });
 
+    // --- WebRTC Signaling for Voice Calls ---
+
+    // 1. Call Session Initiation
+    socket.on("call:initiate", ({ receiverId, callerInfo }) => {
+      const receiverSocketId = userSockets.get(receiverId);
+      console.log(
+        `[SERVER] call:initiate from ${socket.userId} to ${receiverId}. CallerInfo:`,
+        callerInfo,
+      );
+      if (receiverSocketId) {
+        io.to(receiverSocketId).emit("call:incoming", {
+          callerId: socket.userId,
+          callerInfo,
+        });
+      } else {
+        socket.emit("call:error", { message: "User is offline" });
+      }
+    });
+
+    socket.on("call:accept", ({ callerId, receiverInfo }) => {
+      const callerSocketId = userSockets.get(callerId);
+      if (callerSocketId) {
+        console.log(
+          `Call accepted by ${socket.userId} for caller ${callerId}. ReceiverInfo:`,
+          receiverInfo,
+        );
+        io.to(callerSocketId).emit("call:accepted", {
+          receiverId: socket.userId,
+          receiverInfo,
+        });
+      }
+    });
+
+    socket.on("call:reject", ({ callerId }) => {
+      const callerSocketId = userSockets.get(callerId);
+      if (callerSocketId) {
+        console.log(`Call rejected by ${socket.userId} for caller ${callerId}`);
+        io.to(callerSocketId).emit("call:rejected", {
+          receiverId: socket.userId,
+        });
+      }
+    });
+
+    // 2. WebRTC Handshake
+    socket.on("webrtc:offer", ({ to, offer }) => {
+      const targetSocketId = userSockets.get(to);
+      if (targetSocketId) {
+        io.to(targetSocketId).emit("webrtc:offer", {
+          from: socket.userId,
+          offer,
+        });
+      }
+    });
+
+    socket.on("webrtc:answer", ({ to, answer }) => {
+      const targetSocketId = userSockets.get(to);
+      if (targetSocketId) {
+        io.to(targetSocketId).emit("webrtc:answer", {
+          from: socket.userId,
+          answer,
+        });
+      }
+    });
+
+    socket.on("webrtc:ice-candidate", ({ to, candidate }) => {
+      const targetSocketId = userSockets.get(to);
+      if (targetSocketId) {
+        io.to(targetSocketId).emit("webrtc:ice-candidate", {
+          from: socket.userId,
+          candidate,
+        });
+      }
+    });
+
+    // 3. Call Termination
+    socket.on("call:end", ({ to }) => {
+      const targetSocketId = userSockets.get(to);
+      if (targetSocketId) {
+        console.log(`Call ended by ${socket.userId} with ${to}`);
+        io.to(targetSocketId).emit("call:ended", { from: socket.userId });
+      }
+    });
+
     socket.on("disconnect", () => {
       console.log(`User disconnected: ${socket.userId} (${socket.id})`);
       userSockets.delete(socket.userId);
