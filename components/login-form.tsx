@@ -13,7 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { login } from "@/redux/features/auth/authSlice";
@@ -35,6 +35,7 @@ export function LoginForm({
   const router = useRouter();
   const dispatch = useAppDispatch();
   const isLoading = useAppSelector((state) => state.auth.isLoading);
+  const user = useAppSelector((state) => state.auth.user);
 
   const [formData, setFormData] = useState<LoginFormState>({
     email: "",
@@ -63,11 +64,16 @@ export function LoginForm({
       const res = await dispatch(login(result.data)).unwrap();
       toast.success("Logged in successfully.");
       dispatch(setUser(res.data || res));
-      router.push("/");
     } catch (err: any) {
       toast.error(err?.message || "Login failed.");
     }
   };
+
+  useEffect(() => {
+    if (user) {
+      router.push("/");
+    }
+  }, [user, router]);
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
