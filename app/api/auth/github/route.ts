@@ -62,16 +62,21 @@ export const POST = withApiHandler(async (req: NextRequest) => {
   }
 
   if (!user) {
-    user = await User.create({
-      email: primaryEmail,
-      firstName: ghUser.name || ghUser.login,
-      image: ghUser.avatar_url,
-      provider: "github",
-      githubId: ghUser.id,
-    });
+    try {
+      user = await User.create({
+        email: primaryEmail,
+        firstName: ghUser.name || ghUser.login,
+        image: ghUser.avatar_url,
+        provider: "github",
+        githubId: ghUser.id,
+      });
+    } catch (error) {
+      console.error("User Creation Error:", error);
+      throw new ApiError(400, "User not created. Try again ...");
+    }
   }
 
-  const createdUser = await User.findOne({ primaryEmail });
+  const createdUser = await User.findOne({ email: primaryEmail });
 
   if (!createdUser) {
     throw new ApiError(400, "User not created. Try again ...");
