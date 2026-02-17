@@ -39,7 +39,10 @@ export default function UserDropdown() {
       await dispatch(logout()).unwrap();
       dispatch(clearUser());
       toast.success("Logged out successfully.");
-      router.push("/auth/sign-in");
+      setTimeout(() => {
+        router.push("/auth/sign-in");
+        router.refresh();
+      }, 100);
     } catch (err: any) {
       toast.error(err?.message || "Logout failed.");
     }
