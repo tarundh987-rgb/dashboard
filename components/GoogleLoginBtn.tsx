@@ -28,7 +28,10 @@ export default function GoogleLoginBtn() {
           dispatch(setUser(userData));
 
           toast.success("Logged in successfully");
-          router.push("/");
+          setTimeout(() => {
+            router.push("/");
+            router.refresh();
+          }, 100);
         } catch {
           toast.error("Google login failed");
         }
