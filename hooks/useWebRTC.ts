@@ -30,7 +30,18 @@ export function useWebRTC() {
     if (pcRef.current) return pcRef.current;
 
     const pc = new RTCPeerConnection({
-      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+      iceServers: [
+        { urls: "stun:stun.l.google.com:19302" },
+        {
+          urls: [
+            "turn:free.expressturn.com:3478",
+            "turn:free.expressturn.com:3478?transport=tcp",
+          ],
+          username: process.env.NEXT_PUBLIC_TURN_USERNAME!,
+          credential: process.env.NEXT_PUBLIC_TURN_PASSWORD!,
+        },
+      ],
+      iceTransportPolicy: "all",
     });
 
     pc.onicecandidate = (event) => {
