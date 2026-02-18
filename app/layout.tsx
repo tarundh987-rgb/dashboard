@@ -20,8 +20,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Redux Auth",
-  description: "Your Simple State Storing App.",
+  title: "Whispr",
+  description: "Chat with your friends and family.",
 };
 
 export default function RootLayout({
