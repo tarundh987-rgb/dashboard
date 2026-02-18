@@ -6,13 +6,13 @@ import { PanelLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function FloatingSidebarTrigger() {
-  const { state, toggleSidebar } = useSidebar();
+  const { state, toggleSidebar, isMobile } = useSidebar();
 
   return (
     <div
       className={cn(
         "absolute top-2 left-2 z-50 transition-all duration-300 ease-in-out",
-        state === "expanded"
+        !isMobile && state === "expanded"
           ? "opacity-0 pointer-events-none translate-x-4"
           : "opacity-100 translate-x-0",
       )}

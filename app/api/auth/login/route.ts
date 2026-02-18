@@ -57,6 +57,7 @@ export const POST = withApiHandler(async (req: NextRequest) => {
     dateOfBirth: user.dateOfBirth,
     address: user.address,
     provider: user.provider,
+    image: user.image,
     token,
   };
 
