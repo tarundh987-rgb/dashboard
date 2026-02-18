@@ -4,6 +4,7 @@ import Link from "next/link";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import InviteNotifications from "../InviteNotifications";
 import { ModeToggle } from "@/components/ModeToggle";
+import Image from "next/image";
 
 export default function ChatHeader() {
   return (
@@ -13,7 +14,7 @@ export default function ChatHeader() {
           href="/"
           className="flex items-center gap-2 hover:opacity-80 transition-opacity"
         >
-          <span className="font-bold text-lg">Redux Auth</span>
+          <Image src="/textLogo.png" alt="Logo" width={100} height={100} />
         </Link>
         <SidebarTrigger className="cursor-pointer" />
       </div>

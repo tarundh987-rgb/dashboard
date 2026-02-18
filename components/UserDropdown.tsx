@@ -82,14 +82,6 @@ export default function UserDropdown() {
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem asChild>
-          <span className="font-semibold">
-            Role: <span className="font-normal">{user?.role}</span>
-          </span>
-        </DropdownMenuItem>
-
-        <DropdownMenuSeparator />
-
         {user?.role === "ADMIN" && (
           <>
             <DropdownMenuItem asChild className="cursor-pointer">

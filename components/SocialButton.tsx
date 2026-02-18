@@ -23,12 +23,12 @@ export function SocialButton({
       variant="outline"
       onClick={onClick}
       className={cn(
-        "w-full h-11 rounded-full",
+        "w-full h-10 rounded",
         "flex items-center justify-center gap-3",
-        "border border-input bg-background",
+        "border border-slate-300 bg-card",
         "text-sm font-medium text-foreground",
         "hover:bg-muted/60 transition-colors",
-        "px-4 cursor-pointer",
+        "px-4 cursor-pointer truncate",
         className,
       )}
     >

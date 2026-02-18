@@ -17,6 +17,7 @@ import {
 import UserDropdown from "@/components/UserDropdown";
 import { InfoIcon } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function DashboardLayout({
   children,
@@ -36,7 +37,13 @@ export default function DashboardLayout({
         <nav className="sticky top-0 z-50 p-2 shrink-0 flex items-center justify-between w-full bg-background">
           <div className="flex items-center justify-center gap-2">
             <Link href={"/"} className="cursor-pointer">
-              <span className="px-4 font-semibold text-xl">Redux Auth</span>
+              <Image
+                src="/textLogo.png"
+                alt="Logo"
+                width={100}
+                height={100}
+                className="ml-1"
+              />
             </Link>
             <SidebarTrigger className="cursor-pointer" />
           </div>
