@@ -46,6 +46,8 @@ export default function ConversationList({
   useEffect(() => {
     if (!socket || !isConnected) return;
 
+    fetchConversations();
+
     const handleConversationUpdated = () => {
       fetchConversations();
     };
