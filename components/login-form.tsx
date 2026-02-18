@@ -81,7 +81,7 @@ export function LoginForm({
               <Link href="/" className="text-2xl font-bold">
                 <Image src="/logo.png" alt="Logo" width={150} height={150} />
               </Link>
-              <p className="text-muted-foreground text-sm font-semibold -mt-2">
+              <p className="text-muted-foreground text-sm font-semibold">
                 Login to your Whispr account
               </p>
             </div>

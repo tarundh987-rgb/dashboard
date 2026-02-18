@@ -34,7 +34,7 @@ const nav = {
     },
     {
       title: "Settings",
-      url: "/dashboard/settings",
+      url: "/settings",
     },
   ],
 };

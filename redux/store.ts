@@ -3,6 +3,7 @@ import authReducer from "./features/auth/authSlice";
 import adminReducer from "./features/admin/adminSlice";
 import chatReducer from "./features/chat/chatSlice";
 import callReducer from "./features/chat/callSlice";
+import connectionsReducer from "./features/connections/connectionsSlice";
 
 export const store = configureStore({
   reducer: {
@@ -10,6 +11,7 @@ export const store = configureStore({
     admin: adminReducer,
     chat: chatReducer,
     call: callReducer,
+    connections: connectionsReducer,
   },
 });
 

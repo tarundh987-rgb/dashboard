@@ -12,7 +12,7 @@ import {
   SidebarGroupLabel,
   SidebarGroupContent,
 } from "@/components/ui/sidebar";
-import { Settings, Users as UsersIcon, Search } from "lucide-react";
+import { Settings, Search, Link2 } from "lucide-react";
 import Link from "next/link";
 import ConversationList from "@/components/chat/ConversationList";
 import UserSearchDialog from "@/components/chat/UserSearchDialog";
@@ -102,10 +102,27 @@ export function ChatSidebar(props: React.ComponentProps<typeof Sidebar>) {
                     variant="ghost"
                     className="h-7 w-7 text-muted-foreground hover:text-foreground cursor-pointer"
                   >
-                    <UsersIcon className="h-4 w-4" />
+                    <video
+                      src="/group.webm"
+                      className="h-14 w-14"
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                    />
                     <span className="sr-only">New Group</span>
                   </Button>
                 </GroupChatModal>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link href="/connections">
+                      <div className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer text-muted-foreground">
+                        <Link2 className="h-4 w-4" />
+                      </div>
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">Connections</TooltipContent>
+                </Tooltip>
               </TooltipProvider>
             </div>
           </SidebarGroupLabel>
@@ -120,17 +137,8 @@ export function ChatSidebar(props: React.ComponentProps<typeof Sidebar>) {
 
       <SidebarFooter className="border-t border-border/40 p-4 bg-sidebar/50">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-3 overflow-hidden">
-            <UserDropdown />
-            <div className="flex flex-col min-w-0">
-              <span className="text-sm font-medium truncate leading-none">
-                {currentUser?.firstName || "User"}
-              </span>
-              <span className="text-[10px] text-muted-foreground truncate">
-                Online
-              </span>
-            </div>
-          </div>
+          <UserDropdown />
+
           <div className="flex items-center gap-1">
             <ModeToggle />
             <TooltipProvider>

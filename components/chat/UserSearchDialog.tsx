@@ -58,7 +58,9 @@ export default function UserSearchDialog({
   const { socket } = useSocket();
 
   useEffect(() => {
-    if (!open) {
+    if (open) {
+      handleSearch("");
+    } else {
       setQuery("");
       setUsers([]);
     }
@@ -66,8 +68,7 @@ export default function UserSearchDialog({
 
   const handleSearch = async (value: string) => {
     setQuery(value);
-    if (value.length < 2) {
-      setUsers([]);
+    if (value.trim().length > 0 && value.trim().length < 2) {
       return;
     }
 
@@ -276,7 +277,12 @@ export default function UserSearchDialog({
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
             ) : users.length > 0 ? (
-              <div className="space-y-2">
+              <div className="space-y-1">
+                {query.length === 0 && (
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest px-1 mb-2">
+                    Suggested Users
+                  </p>
+                )}
                 {users.map((user) => (
                   <div
                     key={user._id}

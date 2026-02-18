@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -22,6 +22,7 @@ import axios from "axios";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { useSocket } from "@/components/SocketProvider";
 
 interface User {
   _id: string;
@@ -49,11 +50,40 @@ export default function GroupChatModal({
   const [groupName, setGroupName] = useState("");
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
+  const { socket } = useSocket();
+
+  useEffect(() => {
+    if (open) {
+      handleSearch("");
+    } else {
+      setQuery("");
+      setUsers([]);
+      setSelectedUsers([]);
+      setGroupName("");
+    }
+  }, [open]);
 
   const handleSearch = async (value: string) => {
     setQuery(value);
-    if (value.length < 2) {
-      setUsers([]);
+
+    if (value.trim().length === 0) {
+      setLoading(true);
+      try {
+        const res = await axios.get("/api/connections");
+        const filteredUsers = res.data.data.filter(
+          (u: User) =>
+            !selectedUsers.some((selected) => selected._id === u._id),
+        );
+        setUsers(filteredUsers);
+      } catch (error) {
+        console.error("Error fetching connections", error);
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
+    if (value.trim().length < 2) {
       return;
     }
 
@@ -98,6 +128,14 @@ export default function GroupChatModal({
       });
 
       const conversationId = res.data.data._id;
+
+      if (socket) {
+        socket.emit("conversation_created", {
+          conversation: res.data.data,
+          participantIds: selectedUsers.map((u) => u._id),
+        });
+      }
+
       onSelectConversation(conversationId);
       setOpen(false);
 
@@ -194,6 +232,11 @@ export default function GroupChatModal({
               </div>
             ) : users.length > 0 ? (
               <div className="space-y-1">
+                {query.length === 0 && (
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest px-1 mb-2">
+                    Your Connections
+                  </p>
+                )}
                 {users.map((user) => (
                   <button
                     key={user._id}

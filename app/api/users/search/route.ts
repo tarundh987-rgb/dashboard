@@ -15,13 +15,6 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const query = searchParams.get("q") || "";
 
-    if (!query || query.trim().length < 2) {
-      return NextResponse.json(
-        { message: "Search query must be at least 2 characters" },
-        { status: 400 },
-      );
-    }
-
     await dbConnect();
 
     const currentUser = await User.findById(userId);
@@ -30,21 +23,31 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
-    const users = await User.find({
-      _id: { $ne: userId },
-      $or: [
-        { email: { $regex: query, $options: "i" } },
-        { firstName: { $regex: query, $options: "i" } },
-        { lastName: { $regex: query, $options: "i" } },
-      ],
-      $and: [
-        {
-          $or: [{ isActive: true }, { isActive: { $exists: false } }],
-        },
-      ],
-    })
-      .select("email firstName lastName image connections")
-      .limit(20);
+    let users;
+    if (query && query.trim().length >= 2) {
+      users = await User.find({
+        _id: { $ne: userId },
+        $or: [
+          { email: { $regex: query, $options: "i" } },
+          { firstName: { $regex: query, $options: "i" } },
+          { lastName: { $regex: query, $options: "i" } },
+        ],
+        $and: [
+          {
+            $or: [{ isActive: true }, { isActive: { $exists: false } }],
+          },
+        ],
+      })
+        .select("email firstName lastName image connections")
+        .limit(5);
+    } else {
+      users = await User.find({
+        _id: { $ne: userId },
+        $or: [{ isActive: true }, { isActive: { $exists: false } }],
+      })
+        .select("email firstName lastName image connections")
+        .limit(5);
+    }
 
     const userIds = users.map((u) => u._id);
     const invitations = await Invitation.find({

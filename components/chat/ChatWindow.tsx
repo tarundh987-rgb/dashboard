@@ -6,7 +6,7 @@ import { useSocket } from "@/components/SocketProvider";
 import { useAppSelector } from "@/redux/hooks";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, FileText, Download, Phone } from "lucide-react";
+import { Loader2, FileText, Download, Phone, PhoneCall } from "lucide-react";
 import MessageInput from "./MessageInput";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -277,7 +277,7 @@ export default function ChatWindow({ conversationId }: ChatWindowProps) {
               }
             }}
           >
-            <Phone className="h-5 w-5" />
+            <PhoneCall className="h-5 w-5" />
           </Button>
         )}
       </div>

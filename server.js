@@ -130,18 +130,24 @@ app.prepare().then(() => {
       }
     });
 
-    socket.on("conversation_created", ({ conversation, otherUserId }) => {
-      socket.emit("new_conversation", conversation);
+    socket.on(
+      "conversation_created",
+      ({ conversation, otherUserId, participantIds }) => {
+        const targetIds = participantIds || (otherUserId ? [otherUserId] : []);
 
-      const otherSocketId = userSockets.get(otherUserId);
-      if (otherSocketId) {
-        io.to(otherSocketId).emit("new_conversation", conversation);
-      }
-    });
+        socket.emit("new_conversation", conversation);
 
-    // --- WebRTC Signaling for Voice Calls ---
+        targetIds.forEach((id) => {
+          if (id !== socket.userId) {
+            const targetSocketId = userSockets.get(id);
+            if (targetSocketId) {
+              io.to(targetSocketId).emit("new_conversation", conversation);
+            }
+          }
+        });
+      },
+    );
 
-    // 1. Call Session Initiation
     socket.on("call:initiate", ({ receiverId, callerInfo }) => {
       const receiverSocketId = userSockets.get(receiverId);
       console.log(
@@ -182,7 +188,6 @@ app.prepare().then(() => {
       }
     });
 
-    // 2. WebRTC Handshake
     socket.on("webrtc:offer", ({ to, offer }) => {
       const targetSocketId = userSockets.get(to);
       if (targetSocketId) {
@@ -213,7 +218,6 @@ app.prepare().then(() => {
       }
     });
 
-    // 3. Call Termination
     socket.on("call:end", ({ to }) => {
       const targetSocketId = userSockets.get(to);
       if (targetSocketId) {

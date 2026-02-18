@@ -114,7 +114,7 @@ export function SignupForm({
               <Link href={"/"}>
                 <Image src="/logo.png" alt="Logo" width={150} height={150} />
               </Link>
-              <p className="text-muted-foreground -mt-2 text-sm font-semibold text-balance">
+              <p className="text-muted-foreground text-sm font-semibold text-balance">
                 Enter your details below to create your account
               </p>
             </div>
