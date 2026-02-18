@@ -76,7 +76,7 @@ export default function Profile() {
 
     try {
       const res = await dispatch(updateUser(payload)).unwrap();
-      dispatch(setUser(res.data));
+      dispatch(setUser({ ...user, ...res.data }));
       toast.success("User updated successfully.");
     } catch (err: any) {
       toast.error(err?.message || "Update failed.");

@@ -48,6 +48,7 @@ export const PATCH = withApiHandler(async (req: NextRequest) => {
     role: true,
     address: true,
     dateOfBirth: true,
+    image: true,
   });
 
   return apiSuccess(200, user, "User updated successfully.");
