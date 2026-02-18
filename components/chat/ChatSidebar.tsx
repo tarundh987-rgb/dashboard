@@ -12,7 +12,7 @@ import {
   SidebarGroupLabel,
   SidebarGroupContent,
 } from "@/components/ui/sidebar";
-import { Settings, Search, Link2 } from "lucide-react";
+import { Settings, Search, Link2, X } from "lucide-react";
 import Link from "next/link";
 import ConversationList from "@/components/chat/ConversationList";
 import UserSearchDialog from "@/components/chat/UserSearchDialog";
@@ -31,6 +31,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useSidebar } from "@/components/ui/sidebar";
 
 export function ChatSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const dispatch = useDispatch();
@@ -38,6 +39,7 @@ export function ChatSidebar(props: React.ComponentProps<typeof Sidebar>) {
     (state: RootState) => state.chat.selectedConversationId,
   );
   const currentUser = useSelector((state: RootState) => state.auth.user);
+  const { isMobile, setOpenMobile } = useSidebar();
 
   const handleSelectConversation = (id: string) => {
     dispatch(selectConversation(id));
@@ -64,7 +66,18 @@ export function ChatSidebar(props: React.ComponentProps<typeof Sidebar>) {
             />
           </Link>
         </div>
-        <InviteNotifications />
+        <div className="flex items-center gap-2">
+          <InviteNotifications />
+          {isMobile && (
+            <button
+              onClick={() => setOpenMobile(false)}
+              className="rounded-md p-2 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              aria-label="Close sidebar"
+            >
+              <X className="size-5" />
+            </button>
+          )}
+        </div>
       </SidebarHeader>
 
       <SidebarContent>
