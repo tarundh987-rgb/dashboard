@@ -1,6 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -11,7 +10,6 @@ import {
   FieldSeparator,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -22,6 +20,7 @@ import { setUser } from "@/redux/features/auth/authSlice";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import GoogleLoginBtn from "./GoogleLoginBtn";
 import GitHubLoginBtn from "./GitHubLoginBtn";
+import { AuthAnimation } from "./auth-animation";
 
 type LoginFormState = {
   email: string;
@@ -73,110 +72,102 @@ export function LoginForm({
   };
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card className="overflow-hidden p-0">
-        <CardContent className="grid p-0 md:grid-cols-2">
-          <form className="p-6 md:p-8" onSubmit={handleSubmit}>
-            <FieldGroup>
-              <div className="flex flex-col items-center gap-2 text-center">
-                <Link href="/" className="text-2xl font-bold">
-                  Redux Auth
-                </Link>
-                <p className="text-muted-foreground text-sm">
-                  Login to your Redux Auth account
-                </p>
-              </div>
+    <Card className="overflow-hidden p-0 rounded-none border-0">
+      <CardContent className="grid p-0 md:grid-cols-2">
+        <form className="p-6 md:p-8" onSubmit={handleSubmit}>
+          <FieldGroup>
+            <div className="flex flex-col items-center gap-2 text-center">
+              <Link href="/" className="text-2xl font-bold">
+                Redux Auth
+              </Link>
+              <p className="text-muted-foreground text-sm">
+                Login to your Redux Auth account
+              </p>
+            </div>
 
-              <Field>
-                <FieldLabel htmlFor="email">Email</FieldLabel>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="m@example.com"
-                  required
-                />
-                <FieldDescription>
-                  {errors.email && (
-                    <p className="text-destructive text-xs mt-1">
-                      {errors.email[0]}
-                    </p>
-                  )}
-                </FieldDescription>
-              </Field>
-
-              <Field>
-                <div className="flex items-center">
-                  <FieldLabel htmlFor="password">Password</FieldLabel>
-                  <Link
-                    href="/forgot-password"
-                    className="ml-auto text-sm underline-offset-2 hover:underline"
-                  >
-                    Forgot your password?
-                  </Link>
-                </div>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  required
-                />
-                <FieldDescription>
-                  {errors.password && (
-                    <p className="text-destructive text-xs mt-1">
-                      {errors.password[0]}
-                    </p>
-                  )}
-                </FieldDescription>
-              </Field>
-
-              <Field>
-                <Button
-                  type="submit"
-                  disabled={isLoading}
-                  className="cursor-pointer"
-                >
-                  {isLoading ? "Logging in..." : "Login"}
-                </Button>
-              </Field>
-
-              <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
-                Or continue with
-              </FieldSeparator>
-
-              <div className="flex flex-col gap-3">
-                <GoogleLoginBtn />
-                <GitHubLoginBtn />
-              </div>
-
-              <FieldDescription className="text-center">
-                Don&apos;t have an account?{" "}
-                <Link href="/auth/sign-up">Sign up</Link>
+            <Field>
+              <FieldLabel htmlFor="email">Email</FieldLabel>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="m@example.com"
+                required
+              />
+              <FieldDescription>
+                {errors.email && (
+                  <p className="text-destructive text-xs mt-1">
+                    {errors.email[0]}
+                  </p>
+                )}
               </FieldDescription>
-            </FieldGroup>
-          </form>
+            </Field>
 
-          <div className="bg-muted relative hidden md:block">
-            <Image
-              src="/auth.png"
-              alt="Image"
-              height={900}
-              width={900}
-              className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
-            />
-          </div>
-        </CardContent>
-      </Card>
+            <Field>
+              <div className="flex items-center">
+                <FieldLabel htmlFor="password">Password</FieldLabel>
+                <Link
+                  href="/forgot-password"
+                  className="ml-auto text-sm underline-offset-2 hover:underline"
+                >
+                  Forgot your password?
+                </Link>
+              </div>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+              />
+              <FieldDescription>
+                {errors.password && (
+                  <p className="text-destructive text-xs mt-1">
+                    {errors.password[0]}
+                  </p>
+                )}
+              </FieldDescription>
+            </Field>
 
-      <FieldDescription className="px-6 text-center">
-        By clicking continue, you agree to our{" "}
-        <Link href="#">Terms of Service</Link> and{" "}
-        <Link href="#">Privacy Policy</Link>.
-      </FieldDescription>
-    </div>
+            <Field>
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="cursor-pointer"
+              >
+                {isLoading ? "Logging in..." : "Login"}
+              </Button>
+            </Field>
+
+            <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
+              Or continue with
+            </FieldSeparator>
+
+            <div className="flex flex-col gap-3">
+              <GoogleLoginBtn />
+              <GitHubLoginBtn />
+            </div>
+
+            <FieldDescription className="text-center">
+              Don&apos;t have an account?{" "}
+              <Link href="/auth/sign-up">Sign up</Link>
+            </FieldDescription>
+
+            <FieldDescription className="px-6 text-center">
+              By clicking continue, you agree to our{" "}
+              <Link href="#">Terms of Service</Link> and{" "}
+              <Link href="#">Privacy Policy</Link>.
+            </FieldDescription>
+          </FieldGroup>
+        </form>
+
+        <div className="relative hidden md:block">
+          <AuthAnimation />
+        </div>
+      </CardContent>
+    </Card>
   );
 }
