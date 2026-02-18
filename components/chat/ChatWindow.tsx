@@ -216,7 +216,7 @@ export default function ChatWindow({ conversationId }: ChatWindowProps) {
     !details.isGroup && otherUser?._id && onlineUsers.has(otherUser._id);
 
   return (
-    <div className="relative flex flex-col h-[calc(100vh-4rem)] w-full bg-transparent overflow-hidden">
+    <div className="relative flex flex-col h-screen w-full bg-transparent overflow-hidden">
       <div className="absolute top-2.5 left-4 right-4 z-20 border border-border/40 bg-background/60 backdrop-blur-md p-3 flex items-center gap-3 shadow-sm rounded-2xl transition-all duration-300 hover:bg-background/80 hover:shadow-md">
         <div className="relative">
           <Avatar className="h-10 w-10 border border-border/50 shadow-sm">

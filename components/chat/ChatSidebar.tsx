@@ -6,12 +6,13 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
+  SidebarHeader,
+  SidebarRail,
+  SidebarTrigger,
   SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
+  SidebarGroupContent,
 } from "@/components/ui/sidebar";
-import { Settings } from "lucide-react";
+import { Settings, Users as UsersIcon, Search } from "lucide-react";
 import Link from "next/link";
 import ConversationList from "@/components/chat/ConversationList";
 import UserSearchDialog from "@/components/chat/UserSearchDialog";
@@ -19,63 +20,135 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
 import { selectConversation } from "@/redux/features/chat/chatSlice";
 import GroupChatModal from "./GroupChatModal";
+import Image from "next/image";
+import { ModeToggle } from "@/components/ModeToggle";
+import UserDropdown from "@/components/UserDropdown";
+import InviteNotifications from "../InviteNotifications";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export function ChatSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const dispatch = useDispatch();
   const selectedConversationId = useSelector(
     (state: RootState) => state.chat.selectedConversationId,
   );
+  const currentUser = useSelector((state: RootState) => state.auth.user);
 
   const handleSelectConversation = (id: string) => {
     dispatch(selectConversation(id));
   };
 
   return (
-    <>
-      <Sidebar
-        variant="floating"
-        className="mt-15 h-[calc(100vh-4rem)]"
-        {...props}
-      >
-        <SidebarContent>
-          <SidebarGroup>
-            <div className="flex items-center justify-between pb-3 border-b border-sidebar-border/50">
-              <SidebarGroupLabel className="text-sm font-semibold text-sidebar-foreground uppercase tracking-wider">
-                USERS
-              </SidebarGroupLabel>
+    <Sidebar
+      className="h-screen border-r bg-sidebar border-slate-300"
+      {...props}
+    >
+      <SidebarHeader className="h-16 border-b border-border/40 px-4 flex flex-row items-center justify-between bg-sidebar/50 backdrop-blur-sm">
+        <div className="flex items-center gap-2">
+          <SidebarTrigger className="-ml-2" />
+          <Link
+            href="/"
+            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+          >
+            <Image
+              src="/textLogo.png"
+              alt="Logo"
+              width={100}
+              height={32}
+              className="h-6 w-auto object-contain"
+            />
+          </Link>
+        </div>
+        <InviteNotifications />
+      </SidebarHeader>
 
-              <div className="flex items-center gap-1">
+      <SidebarContent>
+        <SidebarGroup className="pt-4">
+          <SidebarGroupLabel className="px-2 mb-2 w-full justify-between items-center sticky top-0 z-10 bg-sidebar/95 backdrop-blur-sm">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Messages
+            </span>
+            <div className="flex items-center gap-1">
+              <TooltipProvider>
                 <UserSearchDialog
                   onSelectUser={(conversationId: string) => {
                     dispatch(selectConversation(conversationId));
                   }}
-                />
-              </div>
+                  tooltip="Search Users"
+                >
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-7 w-7 text-muted-foreground hover:text-foreground cursor-pointer"
+                  >
+                    <Search className="h-4 w-4" />
+                    <span className="sr-only">Search Users</span>
+                  </Button>
+                </UserSearchDialog>
+
+                <GroupChatModal
+                  onSelectConversation={(conversationId: string) => {
+                    dispatch(selectConversation(conversationId));
+                  }}
+                  tooltip="New Group Chat"
+                >
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-7 w-7 text-muted-foreground hover:text-foreground cursor-pointer"
+                  >
+                    <UsersIcon className="h-4 w-4" />
+                    <span className="sr-only">New Group</span>
+                  </Button>
+                </GroupChatModal>
+              </TooltipProvider>
             </div>
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
             <ConversationList
               selectedConversationId={selectedConversationId}
               onSelectConversation={handleSelectConversation}
             />
-          </SidebarGroup>
-        </SidebarContent>
-        <SidebarFooter>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <GroupChatModal
-                onSelectConversation={(conversationId: string) => {
-                  dispatch(selectConversation(conversationId));
-                }}
-              />
-              <SidebarMenuButton asChild variant="outline">
-                <Link href="/settings">
-                  <Settings />
-                  <span>Settings</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarFooter>
-      </Sidebar>
-    </>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+
+      <SidebarFooter className="border-t border-border/40 p-4 bg-sidebar/50">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-3 overflow-hidden">
+            <UserDropdown />
+            <div className="flex flex-col min-w-0">
+              <span className="text-sm font-medium truncate leading-none">
+                {currentUser?.firstName || "User"}
+              </span>
+              <span className="text-[10px] text-muted-foreground truncate">
+                Online
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-1">
+            <ModeToggle />
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link href="/settings">
+                    <div className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer text-muted-foreground">
+                      <Settings className="h-4 w-4" />
+                    </div>
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent>Settings</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        </div>
+      </SidebarFooter>
+      <SidebarRail />
+    </Sidebar>
   );
 }

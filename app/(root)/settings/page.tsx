@@ -35,7 +35,7 @@ export default function SettingsPage() {
   const [twoFactor, setTwoFactor] = useState(false);
 
   return (
-    <>
+    <section className="px-2 py-4">
       <span className="text-md font-semibold mb-2">
         Manage your account preferences and configurations.
       </span>
@@ -362,6 +362,6 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
       </Tabs>
-    </>
+    </section>
   );
 }

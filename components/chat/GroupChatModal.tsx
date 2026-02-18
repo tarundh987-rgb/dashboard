@@ -9,6 +9,11 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Search, Loader2, X, Users as UsersIcon } from "lucide-react";
@@ -28,10 +33,14 @@ interface User {
 
 interface GroupChatModalProps {
   onSelectConversation: (conversationId: string) => void;
+  children?: React.ReactNode;
+  tooltip?: string;
 }
 
 export default function GroupChatModal({
   onSelectConversation,
+  children,
+  tooltip,
 }: GroupChatModalProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -103,9 +112,11 @@ export default function GroupChatModal({
     }
   };
 
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
+  const trigger = (
+    <DialogTrigger asChild>
+      {children ? (
+        children
+      ) : (
         <Button
           size="sm"
           variant="outline"
@@ -114,7 +125,22 @@ export default function GroupChatModal({
           <UsersIcon className="h-4 w-4" />
           <span>New Group Chat</span>
         </Button>
-      </DialogTrigger>
+      )}
+    </DialogTrigger>
+  );
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      {tooltip ? (
+        <Tooltip>
+          <TooltipTrigger asChild>{trigger}</TooltipTrigger>
+          <TooltipContent side="bottom">
+            <p>{tooltip}</p>
+          </TooltipContent>
+        </Tooltip>
+      ) : (
+        trigger
+      )}
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Create Group Chat</DialogTitle>
