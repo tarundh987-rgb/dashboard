@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import { useSocket } from "@/components/SocketProvider";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import {
@@ -13,7 +13,9 @@ import {
 export function useWebRTC() {
   const { socket, isConnected } = useSocket();
   const dispatch = useAppDispatch();
-  const { partner, isMuted } = useAppSelector((state) => state.call);
+  const { partner, isMuted, isVideo, status } = useAppSelector(
+    (state) => state.call,
+  );
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
@@ -21,7 +23,12 @@ export function useWebRTC() {
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
   const partnerRef = useRef(partner);
-  const isVideo = useAppSelector((state) => state.call.isVideo);
+  const isVideoRef = useRef(isVideo);
+  const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
+
+  useEffect(() => {
+    isVideoRef.current = isVideo;
+  }, [isVideo]);
 
   useEffect(() => {
     partnerRef.current = partner;
@@ -56,13 +63,16 @@ export function useWebRTC() {
 
     pc.ontrack = (event) => {
       console.log("[useWebRTC] Received remote track:", event.track.kind);
-      if (isVideo) {
+      const stream = event.streams[0];
+      setRemoteStream(stream);
+
+      if (isVideoRef.current) {
         if (remoteVideoRef.current) {
-          remoteVideoRef.current.srcObject = event.streams[0];
+          remoteVideoRef.current.srcObject = stream;
         }
       } else {
         if (remoteAudioRef.current) {
-          remoteAudioRef.current.srcObject = event.streams[0];
+          remoteAudioRef.current.srcObject = stream;
         }
       }
     };
@@ -89,6 +99,7 @@ export function useWebRTC() {
     if (localVideoRef.current) {
       localVideoRef.current.srcObject = null;
     }
+    setRemoteStream(null);
   }, []);
 
   useEffect(() => {
@@ -134,11 +145,11 @@ export function useWebRTC() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: true,
-          video: isVideo,
+          video: isVideoRef.current,
         });
         localStreamRef.current = stream;
 
-        if (isVideo && localVideoRef.current) {
+        if (isVideoRef.current && localVideoRef.current) {
           localVideoRef.current.srcObject = stream;
         }
 
@@ -170,11 +181,11 @@ export function useWebRTC() {
         if (!localStreamRef.current) {
           const stream = await navigator.mediaDevices.getUserMedia({
             audio: true,
-            video: isVideo,
+            video: isVideoRef.current,
           });
           localStreamRef.current = stream;
 
-          if (isVideo && localVideoRef.current) {
+          if (isVideoRef.current && localVideoRef.current) {
             localVideoRef.current.srcObject = stream;
           }
 
@@ -239,6 +250,20 @@ export function useWebRTC() {
     partner?.id,
     cleanup,
   ]);
+
+  useEffect(() => {
+    if (remoteStream) {
+      if (isVideo && remoteVideoRef.current) {
+        if (remoteVideoRef.current.srcObject !== remoteStream) {
+          remoteVideoRef.current.srcObject = remoteStream;
+        }
+      } else if (!isVideo && remoteAudioRef.current) {
+        if (remoteAudioRef.current.srcObject !== remoteStream) {
+          remoteAudioRef.current.srcObject = remoteStream;
+        }
+      }
+    }
+  }, [remoteStream, isVideo, status]);
 
   useEffect(() => {
     if (localStreamRef.current) {

@@ -79,7 +79,7 @@ export function CallOverlay() {
     <div
       className={`fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md animate-in fade-in duration-300 ${isFullScreen ? "p-0" : "p-4"}`}
     >
-      <audio ref={remoteAudioRef} autoPlay />
+      {!isVideo && <audio ref={remoteAudioRef} autoPlay playsInline />}
 
       <Card
         className={`relative w-full overflow-hidden shadow-2xl bg-card/95 border-primary/20 flex flex-col items-center justify-center transition-all duration-300 ${isFullScreen ? "h-full max-w-none rounded-none" : "max-w-2xl aspect-video rounded-3xl"}`}
@@ -96,7 +96,7 @@ export function CallOverlay() {
 
         {/* Local Video Stream (Picture-in-Picture) */}
         {isVideo && (status === "ongoing" || status === "calling") && (
-          <div className="absolute top-4 right-4 w-32 md:w-48 aspect-video rounded-xl overflow-hidden border-2 border-primary/20 bg-black shadow-lg z-10 transition-transform active:scale-95 cursor-move">
+          <div className="absolute top-4 right-4 w-32 md:w-48 h-48 aspect-video rounded-xl overflow-hidden border-2 border-primary/20 bg-black shadow-lg z-10 transition-transform active:scale-95 cursor-move">
             <video
               ref={localVideoRef}
               autoPlay
