@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { Socket } from "socket.io-client";
 import { initializeSocket } from "@/lib/socket-client";
 import { useAppSelector } from "@/redux/hooks";
+import { toast } from "sonner";
 
 interface SocketContextType {
   socket: Socket | null;
@@ -69,6 +70,22 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
       });
     });
 
+    newSocket.on(
+      "event:reminder",
+      (data: {
+        eventId: string;
+        title: string;
+        description: string;
+        startTime: string;
+        organizer: string;
+      }) => {
+        toast(`🔔 ${data.title}`, {
+          description: `Starting at ${data.startTime}${data.description ? ` — ${data.description}` : ""}`,
+          duration: 10000,
+        });
+      },
+    );
+
     setSocket(newSocket);
 
     return () => {
@@ -78,6 +95,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
         socket.off("connect_error");
         socket.off("user_online");
         socket.off("user_offline");
+        socket.off("event:reminder");
       }
     };
   }, [user]);

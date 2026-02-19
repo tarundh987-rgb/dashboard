@@ -1,3 +1,6 @@
+const path = require("path");
+require("dotenv").config({ path: path.resolve(__dirname, ".env") });
+
 const { createServer } = require("http");
 const { parse } = require("url");
 const next = require("next");
@@ -234,6 +237,133 @@ app.prepare().then(() => {
     });
   });
 
+  let eventCheckInterval;
+
+  async function checkUpcomingEvents() {
+    try {
+      const mongoose = require("mongoose");
+      if (mongoose.connection.readyState !== 1) {
+        if (process.env.MONGODB_URI) {
+          await mongoose.connect(process.env.MONGODB_URI);
+          console.log("🔌 MongoDB connected in server.js interval");
+        } else {
+          return;
+        }
+      }
+
+      if (!mongoose.models.User) {
+        mongoose.model(
+          "User",
+          new mongoose.Schema(
+            {
+              firstName: String,
+              lastName: String,
+              email: String,
+              image: String,
+            },
+            { strict: false },
+          ),
+        );
+      }
+
+      const EventModel =
+        mongoose.models.Event ||
+        mongoose.model(
+          "Event",
+          new mongoose.Schema(
+            {
+              title: String,
+              description: String,
+              date: Date,
+              startTime: String,
+              endTime: String,
+              organizer: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+              participants: [
+                { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+              ],
+              color: String,
+              status: {
+                type: String,
+                default: "scheduled",
+              },
+              notified: { type: Boolean, default: false },
+            },
+            { timestamps: true },
+          ),
+        );
+
+      const now = new Date();
+      const startOfDay = new Date(now);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(now);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const windowStart = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      const windowEnd = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+      const candidates = await EventModel.find({
+        date: { $gte: windowStart, $lte: windowEnd },
+        notified: false,
+        status: "scheduled",
+      }).populate("organizer", "firstName lastName");
+
+      for (const event of candidates) {
+        const eventDatePart = event.date.toISOString().split("T")[0];
+        const eventTimePart = event.startTime;
+        const eventDateTime = new Date(`${eventDatePart}T${eventTimePart}:00`);
+
+        if (isNaN(eventDateTime.getTime())) continue;
+
+        if (eventDateTime <= now) {
+          const allUserIds = [
+            event.organizer?._id?.toString(),
+            ...event.participants.map((p) => p.toString()),
+          ].filter(Boolean);
+
+          const uniqueIds = [...new Set(allUserIds)];
+
+          uniqueIds.forEach((userId) => {
+            const socketId = userSockets.get(userId);
+            if (socketId) {
+              io.to(socketId).emit("event:reminder", {
+                eventId: event._id.toString(),
+                title: event.title,
+                description: event.description || "",
+                startTime: event.startTime,
+                organizer: event.organizer?.firstName
+                  ? `${event.organizer.firstName} ${event.organizer.lastName || ""}`
+                  : "Someone",
+              });
+            }
+          });
+
+          event.notified = true;
+          await event.save();
+          console.log(
+            `[Event Reminder] Notified for event: ${event.title} at ${eventDateTime.toLocaleString()}`,
+          );
+        }
+      }
+    } catch (err) {
+      console.error("[Event Reminder Error]", err);
+    }
+  }
+
+  eventCheckInterval = setInterval(checkUpcomingEvents, 60 * 1000);
+
+  const mongoose = require("mongoose");
+  if (process.env.MONGODB_URI && mongoose.connection.readyState !== 1) {
+    mongoose
+      .connect(process.env.MONGODB_URI)
+      .then(() => {
+        console.log("🔌 MongoDB connected in server.js");
+        checkUpcomingEvents();
+      })
+      .catch((err) => console.error("[server.js] MongoDB connect error:", err));
+  } else {
+    checkUpcomingEvents();
+  }
+
   httpServer
     .once("error", (err) => {
       console.error(err);
@@ -246,6 +376,7 @@ app.prepare().then(() => {
 
   process.on("SIGTERM", () => {
     console.log("SIGTERM signal received: closing HTTP server");
+    clearInterval(eventCheckInterval);
     httpServer.close(() => {
       console.log("HTTP server closed");
       process.exit(0);
