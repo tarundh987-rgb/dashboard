@@ -18,7 +18,10 @@ export function useWebRTC() {
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
+  const localVideoRef = useRef<HTMLVideoElement | null>(null);
+  const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
   const partnerRef = useRef(partner);
+  const isVideo = useAppSelector((state) => state.call.isVideo);
 
   useEffect(() => {
     partnerRef.current = partner;
@@ -52,8 +55,15 @@ export function useWebRTC() {
     };
 
     pc.ontrack = (event) => {
-      if (remoteAudioRef.current) {
-        remoteAudioRef.current.srcObject = event.streams[0];
+      console.log("[useWebRTC] Received remote track:", event.track.kind);
+      if (isVideo) {
+        if (remoteVideoRef.current) {
+          remoteVideoRef.current.srcObject = event.streams[0];
+        }
+      } else {
+        if (remoteAudioRef.current) {
+          remoteAudioRef.current.srcObject = event.streams[0];
+        }
       }
     };
 
@@ -72,6 +82,12 @@ export function useWebRTC() {
     }
     if (remoteAudioRef.current) {
       remoteAudioRef.current.srcObject = null;
+    }
+    if (remoteVideoRef.current) {
+      remoteVideoRef.current.srcObject = null;
+    }
+    if (localVideoRef.current) {
+      localVideoRef.current.srcObject = null;
     }
   }, []);
 
@@ -92,6 +108,7 @@ export function useWebRTC() {
           id: callerId,
           name: callerInfo.name || "Unknown User",
           image: callerInfo.image,
+          isVideo: !!callerInfo.isVideo,
         }),
       );
     };
@@ -117,8 +134,14 @@ export function useWebRTC() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: true,
+          video: isVideo,
         });
         localStreamRef.current = stream;
+
+        if (isVideo && localVideoRef.current) {
+          localVideoRef.current.srcObject = stream;
+        }
+
         stream.getTracks().forEach((track) => pc.addTrack(track, stream));
 
         const offer = await pc.createOffer();
@@ -147,8 +170,14 @@ export function useWebRTC() {
         if (!localStreamRef.current) {
           const stream = await navigator.mediaDevices.getUserMedia({
             audio: true,
+            video: isVideo,
           });
           localStreamRef.current = stream;
+
+          if (isVideo && localVideoRef.current) {
+            localVideoRef.current.srcObject = stream;
+          }
+
           stream.getTracks().forEach((track) => pc.addTrack(track, stream));
         }
 
@@ -219,5 +248,5 @@ export function useWebRTC() {
     }
   }, [isMuted]);
 
-  return { remoteAudioRef, cleanup };
+  return { remoteAudioRef, localVideoRef, remoteVideoRef, cleanup };
 }

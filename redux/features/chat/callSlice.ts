@@ -16,6 +16,7 @@ interface CallState {
     image?: string;
   } | null;
   isMuted: boolean;
+  isVideo: boolean;
   errorMessage: string | null;
 }
 
@@ -23,6 +24,7 @@ const initialState: CallState = {
   status: "idle",
   partner: null,
   isMuted: false,
+  isVideo: false,
   errorMessage: null,
 };
 
@@ -32,18 +34,30 @@ const callSlice = createSlice({
   reducers: {
     initiateCall: (
       state,
-      action: PayloadAction<{ id: string; name: string; image?: string }>,
+      action: PayloadAction<{
+        id: string;
+        name: string;
+        image?: string;
+        isVideo?: boolean;
+      }>,
     ) => {
       state.status = "calling";
       state.partner = action.payload;
+      state.isVideo = !!action.payload.isVideo;
       state.errorMessage = null;
     },
     incomingCall: (
       state,
-      action: PayloadAction<{ id: string; name: string; image?: string }>,
+      action: PayloadAction<{
+        id: string;
+        name: string;
+        image?: string;
+        isVideo?: boolean;
+      }>,
     ) => {
       state.status = "receiving";
       state.partner = action.payload;
+      state.isVideo = !!action.payload.isVideo;
     },
     acceptCall: (
       state,
@@ -60,6 +74,7 @@ const callSlice = createSlice({
       state.status = "idle";
       state.partner = null;
       state.isMuted = false;
+      state.isVideo = false;
     },
     setError: (state, action: PayloadAction<string>) => {
       state.status = "error";

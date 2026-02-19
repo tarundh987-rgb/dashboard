@@ -12,7 +12,7 @@ import {
   SidebarGroupLabel,
   SidebarGroupContent,
 } from "@/components/ui/sidebar";
-import { Settings, Search, Link2, X } from "lucide-react";
+import { Settings, Search, Link2, X, Users } from "lucide-react";
 import Link from "next/link";
 import ConversationList from "@/components/chat/ConversationList";
 import UserSearchDialog from "@/components/chat/UserSearchDialog";
@@ -114,14 +114,7 @@ export function ChatSidebar(props: React.ComponentProps<typeof Sidebar>) {
                     variant="ghost"
                     className="h-7 w-7 text-muted-foreground hover:text-foreground cursor-pointer"
                   >
-                    <video
-                      src="/group.webm"
-                      className="h-14 w-14"
-                      autoPlay
-                      loop
-                      muted
-                      playsInline
-                    />
+                    <Users className="h-4 w-4" />
                     <span className="sr-only">New Group</span>
                   </Button>
                 </GroupChatModal>

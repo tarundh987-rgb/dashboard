@@ -5,7 +5,7 @@ import { useSocket } from "@/components/SocketProvider";
 import { useAppSelector, useAppDispatch } from "@/redux/hooks";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, FileText, Download, Phone, PhoneCall } from "lucide-react";
+import { Loader2, FileText, Download, PhoneCall, Video } from "lucide-react";
 import MessageInput from "./MessageInput";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -211,33 +211,66 @@ export default function ChatWindow({ conversationId }: ChatWindowProps) {
           )}
         </div>
         {!details.isGroup && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className={`rounded-full h-9 w-9 transition-colors ${isOnline ? "text-primary hover:bg-primary/10" : "text-muted-foreground/40 cursor-not-allowed"}`}
-            disabled={!isOnline}
-            onClick={() => {
-              if (otherUser && socket) {
-                dispatch(
-                  initiateCall({
-                    id: otherUser._id,
-                    name: details.name || "User",
-                    image: details.image,
-                  }),
-                );
-                socket.emit("call:initiate", {
-                  receiverId: otherUser._id,
-                  callerInfo: {
-                    name:
-                      currentUser?.firstName || currentUser?.email || "User",
-                    image: currentUser?.image,
-                  },
-                });
-              }
-            }}
-          >
-            <PhoneCall className="h-5 w-5" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className={`rounded-full h-9 w-9 transition-colors ${isOnline ? "text-primary hover:bg-primary/10" : "text-muted-foreground/40 cursor-not-allowed"}`}
+              disabled={!isOnline}
+              onClick={() => {
+                if (otherUser && socket) {
+                  dispatch(
+                    initiateCall({
+                      id: otherUser._id,
+                      name: details.name || "User",
+                      image: details.image,
+                      isVideo: true,
+                    }),
+                  );
+                  socket.emit("call:initiate", {
+                    receiverId: otherUser._id,
+                    callerInfo: {
+                      name:
+                        currentUser?.firstName || currentUser?.email || "User",
+                      image: currentUser?.image,
+                      isVideo: true,
+                    },
+                  });
+                }
+              }}
+            >
+              <Video className="h-5 w-5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className={`rounded-full h-9 w-9 transition-colors ${isOnline ? "text-primary hover:bg-primary/10" : "text-muted-foreground/40 cursor-not-allowed"}`}
+              disabled={!isOnline}
+              onClick={() => {
+                if (otherUser && socket) {
+                  dispatch(
+                    initiateCall({
+                      id: otherUser._id,
+                      name: details.name || "User",
+                      image: details.image,
+                      isVideo: false,
+                    }),
+                  );
+                  socket.emit("call:initiate", {
+                    receiverId: otherUser._id,
+                    callerInfo: {
+                      name:
+                        currentUser?.firstName || currentUser?.email || "User",
+                      image: currentUser?.image,
+                      isVideo: false,
+                    },
+                  });
+                }
+              }}
+            >
+              <PhoneCall className="h-5 w-5" />
+            </Button>
+          </div>
         )}
       </div>
 
