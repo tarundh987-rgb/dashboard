@@ -16,7 +16,7 @@ import {
   sendMessage,
   addMessage,
 } from "@/redux/features/chat/chatSlice";
-import type { Attachment, Message } from "@/redux/features/chat/chatSlice";
+import type { Attachment } from "@/redux/features/chat/chatSlice";
 
 interface ChatWindowProps {
   conversationId: string;

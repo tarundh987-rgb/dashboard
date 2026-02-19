@@ -3,7 +3,14 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Loader2, Paperclip, X, File, Film } from "lucide-react";
+import { Send, Loader2, Paperclip, X, File, Film, Smile } from "lucide-react";
+import EmojiPicker, { Theme } from "emoji-picker-react";
+import { useTheme } from "next-themes";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import axios from "axios";
 interface MessageInputProps {
   conversationId: string;
@@ -24,6 +31,7 @@ export default function MessageInput({
   >([]);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { theme } = useTheme();
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -86,6 +94,11 @@ export default function MessageInput({
   const removeFile = (index: number) => {
     setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
     setPreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const onEmojiClick = (emojiData: any) => {
+    setMessage((prev) => prev + emojiData.emoji);
+    onTyping(true);
   };
 
   const handleSend = async () => {
@@ -180,6 +193,31 @@ export default function MessageInput({
           >
             <Paperclip className="h-4 w-4" />
           </Button>
+
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="mb-1 h-9 w-9 shrink-0 rounded-xl hover:bg-primary/10 hover:text-primary transition-all duration-200"
+                disabled={isLoading}
+              >
+                <Smile className="h-4 w-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent
+              side="top"
+              align="start"
+              className="p-0 border-none bg-transparent shadow-none w-auto"
+            >
+              <EmojiPicker
+                onEmojiClick={onEmojiClick}
+                theme={theme === "dark" ? Theme.DARK : Theme.LIGHT}
+                lazyLoadEmojis={true}
+              />
+            </PopoverContent>
+          </Popover>
           <Textarea
             value={message}
             onChange={handleChange}
