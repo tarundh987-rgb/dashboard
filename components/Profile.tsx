@@ -15,7 +15,7 @@ import { Button } from "./ui/button";
 import DobPicker from "./DobPicker";
 import { Textarea } from "./ui/textarea";
 import { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
 import {
   updateUser,

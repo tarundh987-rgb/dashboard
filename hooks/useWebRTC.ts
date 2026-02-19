@@ -13,8 +13,7 @@ import {
 export function useWebRTC() {
   const { socket, isConnected } = useSocket();
   const dispatch = useAppDispatch();
-  const { status, partner, isMuted } = useAppSelector((state) => state.call);
-  const currentUser = useAppSelector((state) => state.auth.user);
+  const { partner, isMuted } = useAppSelector((state) => state.call);
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
@@ -25,7 +24,6 @@ export function useWebRTC() {
     partnerRef.current = partner;
   }, [partner]);
 
-  // Initialize Peer Connection
   const createPeerConnection = useCallback(() => {
     if (pcRef.current) return pcRef.current;
 
@@ -63,7 +61,6 @@ export function useWebRTC() {
     return pc;
   }, [socket]);
 
-  // Cleanup
   const cleanup = useCallback(() => {
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach((track) => track.stop());
@@ -78,7 +75,6 @@ export function useWebRTC() {
     }
   }, []);
 
-  // Set up signaling listeners
   useEffect(() => {
     if (!socket || !isConnected) return;
 
@@ -215,7 +211,6 @@ export function useWebRTC() {
     cleanup,
   ]);
 
-  // Mute control
   useEffect(() => {
     if (localStreamRef.current) {
       localStreamRef.current.getAudioTracks().forEach((track) => {
@@ -223,10 +218,6 @@ export function useWebRTC() {
       });
     }
   }, [isMuted]);
-
-  const toggleLocalMute = useCallback(() => {
-    // Logic is handled by the effect above through Redux
-  }, []);
 
   return { remoteAudioRef, cleanup };
 }

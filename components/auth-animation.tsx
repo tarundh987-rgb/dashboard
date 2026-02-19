@@ -1,8 +1,14 @@
 "use client";
 
-import React from "react";
+import { useState, useEffect } from "react";
 
 export function AuthAnimation() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
     <div className="absolute inset-0 h-full w-full overflow-hidden bg-muted flex items-center justify-center pointer-events-none select-none">
       <svg
@@ -252,34 +258,35 @@ export function AuthAnimation() {
         </g>
 
         {/* Particle-like elements */}
-        {Array.from({ length: 20 }).map((_, i) => (
-          <circle
-            key={i}
-            r={Math.random() * 3}
-            fill="var(--primary)"
-            opacity="0.4"
-          >
-            <animate
-              attributeName="cx"
-              values={`${Math.random() * 800};${Math.random() * 800};${Math.random() * 800}`}
-              dur={`${15 + Math.random() * 20}s`}
-              repeatCount="indefinite"
-            />
-            <animate
-              attributeName="cy"
-              values={`${Math.random() * 800};${Math.random() * 800};${Math.random() * 800}`}
-              dur={`${15 + Math.random() * 20}s`}
-              repeatCount="indefinite"
-            />
-          </circle>
-        ))}
+        {mounted &&
+          Array.from({ length: 20 }).map((_, i) => (
+            <circle
+              key={i}
+              r={Math.random() * 3}
+              fill="var(--primary)"
+              opacity="0.4"
+            >
+              <animate
+                attributeName="cx"
+                values={`${Math.random() * 800};${Math.random() * 800};${Math.random() * 800}`}
+                dur={`${15 + Math.random() * 20}s`}
+                repeatCount="indefinite"
+              />
+              <animate
+                attributeName="cy"
+                values={`${Math.random() * 800};${Math.random() * 800};${Math.random() * 800}`}
+                dur={`${15 + Math.random() * 20}s`}
+                repeatCount="indefinite"
+              />
+            </circle>
+          ))}
       </svg>
 
       {/* Texture Overlay */}
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] blend-multiply"></div>
 
       {/* Glassmorphism Highlight */}
-      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent"></div>
+      <div className="absolute inset-0 bg-linear-to-tr from-transparent via-white/5 to-transparent"></div>
     </div>
   );
 }

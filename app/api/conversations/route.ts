@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import { Conversation, User } from "@/models";
-import { Types } from "mongoose";
 
 export async function GET(req: NextRequest) {
   try {

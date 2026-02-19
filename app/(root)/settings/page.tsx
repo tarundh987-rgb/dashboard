@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import {
   Card,
   CardContent,
@@ -8,32 +7,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import {
-  User,
-  Bell,
-  Shield,
-  CreditCard,
-  Globe,
-  Check,
-  AlertTriangle,
-  Settings,
-} from "lucide-react";
+import { User, Shield, AlertTriangle, Settings } from "lucide-react";
 import Profile from "@/components/Profile";
 import UpdatePassword from "@/components/UpdatePassword";
 import DeleteAccount from "@/components/DeleteAccount";
 
 export default function SettingsPage() {
-  const [emailNotifications, setEmailNotifications] = useState(true);
-  const [pushNotifications, setPushNotifications] = useState(true);
-  const [marketingEmails, setMarketingEmails] = useState(false);
-  const [securityAlerts, setSecurityAlerts] = useState(true);
-  const [twoFactor, setTwoFactor] = useState(false);
-
   return (
     <section className="px-2 py-4">
       <span className="text-md font-semibold mb-2">

@@ -1,60 +1,38 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import axios from "axios";
 import { useSocket } from "@/components/SocketProvider";
-import { useAppSelector } from "@/redux/hooks";
+import { useAppSelector, useAppDispatch } from "@/redux/hooks";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, FileText, Download, Phone, PhoneCall } from "lucide-react";
 import MessageInput from "./MessageInput";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { useAppDispatch } from "@/redux/hooks";
 import { initiateCall } from "@/redux/features/chat/callSlice";
-
-interface Attachment {
-  url: string;
-  name: string;
-  type: string;
-  size: number;
-}
-
-interface Message {
-  _id: string;
-  sender: {
-    _id: string;
-    firstName?: string;
-    lastName?: string;
-    email: string;
-    image?: string;
-  };
-  text: string;
-  attachments?: Attachment[];
-  createdAt: string;
-  isRead: boolean;
-}
-
-interface Conversation {
-  _id: string;
-  isGroup: boolean;
-  name?: string;
-  participants: any[];
-}
+import {
+  fetchMessages,
+  fetchConversationDetails,
+  sendMessage,
+  addMessage,
+} from "@/redux/features/chat/chatSlice";
+import type { Attachment, Message } from "@/redux/features/chat/chatSlice";
 
 interface ChatWindowProps {
   conversationId: string;
 }
 
 export default function ChatWindow({ conversationId }: ChatWindowProps) {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [conversation, setConversation] = useState<Conversation | null>(null);
-  const [loading, setLoading] = useState(true);
+  const dispatch = useAppDispatch();
+  const messages = useAppSelector((state) => state.chat.messages);
+  const conversation = useAppSelector(
+    (state) => state.chat.currentConversation,
+  );
+  const loading = useAppSelector((state) => state.chat.messagesLoading);
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
   const scrollRef = useRef<HTMLDivElement>(null);
   const { socket, isConnected, onlineUsers } = useSocket();
   const currentUser = useAppSelector((state) => state.auth.user);
-  const dispatch = useAppDispatch();
 
   useEffect(() => {
     if (!socket) return;
@@ -69,24 +47,10 @@ export default function ChatWindow({ conversationId }: ChatWindowProps) {
   }, [socket]);
 
   useEffect(() => {
-    const fetchMessages = async () => {
-      setLoading(true);
-      try {
-        const [msgsRes, convRes] = await Promise.all([
-          axios.get(`/api/conversations/${conversationId}/messages`),
-          axios.get(`/api/conversations/${conversationId}`),
-        ]);
-        setMessages(msgsRes.data.data);
-        setConversation(convRes.data.data);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (conversationId) {
-      fetchMessages();
+      dispatch(fetchMessages(conversationId));
+      dispatch(fetchConversationDetails(conversationId));
+
       if (socket && isConnected) {
         socket.emit("join_conversation", { conversationId });
       }
@@ -97,17 +61,13 @@ export default function ChatWindow({ conversationId }: ChatWindowProps) {
         socket.emit("leave_conversation", { conversationId });
       }
     };
-  }, [conversationId, socket, isConnected]);
+  }, [conversationId, socket, isConnected, dispatch]);
 
   useEffect(() => {
     if (!socket || !isConnected) return;
 
     const handleNewMessage = (message: any) => {
-      setMessages((prev) => {
-        if (prev.some((m) => m._id === message._id)) return prev;
-        return [...prev, message];
-      });
-
+      dispatch(addMessage(message));
       setTimeout(scrollToBottom, 100);
     };
 
@@ -136,7 +96,7 @@ export default function ChatWindow({ conversationId }: ChatWindowProps) {
       socket.off("new_message", handleNewMessage);
       socket.off("user_typing", handleUserTyping);
     };
-  }, [socket, isConnected, conversationId]);
+  }, [socket, isConnected, conversationId, dispatch]);
 
   useEffect(() => {
     scrollToBottom();
@@ -153,20 +113,19 @@ export default function ChatWindow({ conversationId }: ChatWindowProps) {
     attachments?: Attachment[],
   ) => {
     try {
-      const res = await axios.post(
-        `/api/conversations/${conversationId}/messages`,
-        { text, attachments },
+      const resultAction = await dispatch(
+        sendMessage({ conversationId, text, attachments }),
       );
-      const newMessage = res.data.data;
+      if (sendMessage.fulfilled.match(resultAction)) {
+        const newMessage = resultAction.payload;
+        setTimeout(scrollToBottom, 50);
 
-      setMessages((prev) => [...prev, newMessage]);
-      setTimeout(scrollToBottom, 50);
-
-      if (socket && isConnected) {
-        socket.emit("send_message", {
-          conversationId,
-          message: newMessage,
-        });
+        if (socket && isConnected) {
+          socket.emit("send_message", {
+            conversationId,
+            message: newMessage,
+          });
+        }
       }
     } catch (error) {
       console.error("Failed to send message", error);
@@ -179,7 +138,7 @@ export default function ChatWindow({ conversationId }: ChatWindowProps) {
     }
   };
 
-  if (loading) {
+  if (loading && messages.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -285,13 +244,18 @@ export default function ChatWindow({ conversationId }: ChatWindowProps) {
       <ScrollArea className="flex-1 h-full w-full">
         <div className="flex flex-col gap-4 pt-24 pb-28 px-4 sm:px-6">
           {messages.map((msg, index) => {
-            const isMe =
-              msg.sender?._id === currentUser?._id ||
-              msg.sender === currentUser?._id;
-            const isPrevFromSame =
-              index > 0 &&
-              (messages[index - 1].sender?._id === msg.sender?._id ||
-                messages[index - 1].sender === msg.sender);
+            const senderId =
+              typeof msg.sender === "string" ? msg.sender : msg.sender._id;
+            const isMe = senderId === currentUser?._id;
+
+            const prevMsg = index > 0 ? messages[index - 1] : null;
+            const prevSenderId = prevMsg
+              ? typeof prevMsg.sender === "string"
+                ? prevMsg.sender
+                : prevMsg.sender._id
+              : null;
+
+            const isPrevFromSame = index > 0 && prevSenderId === senderId;
 
             return (
               <div

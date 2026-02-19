@@ -12,24 +12,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Check, X, Loader2 } from "lucide-react";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import {
+  fetchInvitations,
+  acceptInvitation,
+  rejectInvitation,
+} from "@/redux/features/connections/connectionsSlice";
 import { useSocket } from "@/components/SocketProvider";
-import axios from "axios";
-
-interface User {
-  _id: string;
-  firstName?: string;
-  lastName?: string;
-  email: string;
-  image?: string;
-}
-
-interface Invitation {
-  _id: string;
-  sender: User;
-  receiver: User;
-  status: string;
-  createdAt: string;
-}
 
 interface PendingInvitesDialogProps {
   open: boolean;
@@ -42,78 +31,39 @@ export default function PendingInvitesDialog({
   onOpenChange,
   onInviteAccepted,
 }: PendingInvitesDialogProps) {
-  const [receivedInvites, setReceivedInvites] = useState<Invitation[]>([]);
-  const [sentInvites, setSentInvites] = useState<Invitation[]>([]);
-  const [loading, setLoading] = useState(false);
+  const dispatch = useAppDispatch();
+  const { receivedInvitations, sentInvitations, loading } = useAppSelector(
+    (state) => state.connections,
+  );
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const { socket } = useSocket();
 
   useEffect(() => {
-    if (!socket) return;
-
-    socket.on("invite:received", (invitation: Invitation) => {
-      setReceivedInvites((prev) => [invitation, ...prev]);
-    });
-
-    socket.on("invite:accepted", (invitation: Invitation) => {
-      setSentInvites((prev) =>
-        prev.filter((inv) => inv._id !== invitation._id),
-      );
-    });
-
-    socket.on("invite:rejected", (invitation: Invitation) => {
-      setSentInvites((prev) =>
-        prev.filter((inv) => inv._id !== invitation._id),
-      );
-    });
-
-    return () => {
-      socket.off("invite:received");
-      socket.off("invite:accepted");
-      socket.off("invite:rejected");
-    };
-  }, [socket]);
-
-  useEffect(() => {
     if (open) {
-      fetchInvitations();
+      dispatch(fetchInvitations({ type: "received", status: "pending" }));
+      dispatch(fetchInvitations({ type: "sent", status: "pending" }));
     }
-  }, [open]);
-
-  const fetchInvitations = async () => {
-    setLoading(true);
-    try {
-      const [receivedRes, sentRes] = await Promise.all([
-        axios.get("/api/invitations?type=received&status=pending"),
-        axios.get("/api/invitations?type=sent&status=pending"),
-      ]);
-      setReceivedInvites(receivedRes.data.data);
-      setSentInvites(sentRes.data.data);
-    } catch (error) {
-      console.error("Error fetching invitations:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [open, dispatch]);
 
   const handleAccept = async (invitationId: string) => {
     setActionLoading(invitationId);
     try {
-      const res = await axios.post(`/api/invitations/${invitationId}/accept`);
-
-      if (socket) {
-        const invitation = res.data.data;
-        socket.emit("accept_invite", {
-          senderId: invitation.sender._id,
-          invitation: invitation,
-        });
-      }
-
-      setReceivedInvites((prev) =>
-        prev.filter((inv) => inv._id !== invitationId),
-      );
-      if (onInviteAccepted) {
-        onInviteAccepted();
+      const resultAction = await dispatch(acceptInvitation(invitationId));
+      if (acceptInvitation.fulfilled.match(resultAction)) {
+        if (socket) {
+          const invitation = receivedInvitations.find(
+            (inv) => inv._id === invitationId,
+          );
+          if (invitation) {
+            socket.emit("accept_invite", {
+              senderId: invitation.sender._id,
+              invitation: invitation,
+            });
+          }
+        }
+        if (onInviteAccepted) {
+          onInviteAccepted();
+        }
       }
     } catch (error) {
       console.error("Error accepting invitation:", error);
@@ -125,19 +75,20 @@ export default function PendingInvitesDialog({
   const handleReject = async (invitationId: string) => {
     setActionLoading(invitationId);
     try {
-      const res = await axios.post(`/api/invitations/${invitationId}/reject`);
-
-      if (socket) {
-        const invitation = res.data.data;
-        socket.emit("reject_invite", {
-          senderId: invitation.sender._id,
-          invitation: invitation,
-        });
+      const resultAction = await dispatch(rejectInvitation(invitationId));
+      if (rejectInvitation.fulfilled.match(resultAction)) {
+        if (socket) {
+          const invitation = receivedInvitations.find(
+            (inv) => inv._id === invitationId,
+          );
+          if (invitation) {
+            socket.emit("reject_invite", {
+              senderId: invitation.sender._id,
+              invitation: invitation,
+            });
+          }
+        }
       }
-
-      setReceivedInvites((prev) =>
-        prev.filter((inv) => inv._id !== invitationId),
-      );
     } catch (error) {
       console.error("Error rejecting invitation:", error);
     } finally {
@@ -159,9 +110,9 @@ export default function PendingInvitesDialog({
         <DialogHeader className="px-6 py-4 border-b bg-muted/40">
           <DialogTitle className="text-lg font-semibold flex items-center gap-2">
             Invitations
-            {receivedInvites.length > 0 && (
+            {receivedInvitations.length > 0 && (
               <span className="bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full">
-                {receivedInvites.length} New
+                {receivedInvitations.length} New
               </span>
             )}
           </DialogTitle>
@@ -177,14 +128,14 @@ export default function PendingInvitesDialog({
 
           <TabsContent value="received" className="mt-0">
             <ScrollArea className="h-[400px] px-6 py-4">
-              {loading ? (
+              {loading && receivedInvitations.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                   <Loader2 className="h-8 w-8 animate-spin mb-2" />
                   <p className="text-sm">Loading invitations...</p>
                 </div>
-              ) : receivedInvites.length > 0 ? (
+              ) : receivedInvitations.length > 0 ? (
                 <div className="space-y-4">
-                  {receivedInvites.map((invite) => (
+                  {receivedInvitations.map((invite) => (
                     <div
                       key={invite._id}
                       className="group flex flex-col gap-3 p-4 rounded-xl border bg-card hover:bg-accent/5 transition-colors shadow-sm"
@@ -256,14 +207,14 @@ export default function PendingInvitesDialog({
 
           <TabsContent value="sent" className="mt-0">
             <ScrollArea className="h-[400px] px-6 py-4">
-              {loading ? (
+              {loading && sentInvitations.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                   <Loader2 className="h-8 w-8 animate-spin mb-2" />
                   <p className="text-sm">Loading invitations...</p>
                 </div>
-              ) : sentInvites.length > 0 ? (
+              ) : sentInvitations.length > 0 ? (
                 <div className="space-y-3">
-                  {sentInvites.map((invite) => (
+                  {sentInvitations.map((invite) => (
                     <div
                       key={invite._id}
                       className="flex items-center gap-3 p-3 rounded-lg border bg-card/50"

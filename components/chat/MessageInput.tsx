@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Loader2, Paperclip, X, File, Image, Film } from "lucide-react";
+import { Send, Loader2, Paperclip, X, File, Film } from "lucide-react";
 import axios from "axios";
 interface MessageInputProps {
   conversationId: string;

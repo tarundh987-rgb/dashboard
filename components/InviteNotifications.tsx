@@ -4,54 +4,45 @@ import * as React from "react";
 import InviteNotificationBadge from "@/components/chat/InviteNotificationBadge";
 import PendingInvitesDialog from "@/components/chat/PendingInvitesDialog";
 import { useSocket } from "@/components/SocketProvider";
-import axios from "axios";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import {
+  fetchInvitations,
+  addReceivedInvitation,
+} from "@/redux/features/connections/connectionsSlice";
 
 export default function InviteNotifications() {
   const [invitesDialogOpen, setInvitesDialogOpen] = React.useState(false);
-  const [inviteCount, setInviteCount] = React.useState(0);
   const { socket } = useSocket();
+  const dispatch = useAppDispatch();
+  const receivedInvitations = useAppSelector(
+    (state) => state.connections.receivedInvitations,
+  );
 
   React.useEffect(() => {
-    fetchPendingCount();
+    dispatch(fetchInvitations({ type: "received", status: "pending" }));
 
     if (socket) {
-      socket.on("invite:received", () => {
-        setInviteCount((prev) => prev + 1);
-      });
+      const handleInviteReceived = (invitation: any) => {
+        dispatch(addReceivedInvitation(invitation));
+      };
+
+      socket.on("invite:received", handleInviteReceived);
+
+      return () => {
+        socket.off("invite:received", handleInviteReceived);
+      };
     }
-
-    return () => {
-      if (socket) {
-        socket.off("invite:received");
-      }
-    };
-  }, [socket]);
-
-  const fetchPendingCount = async () => {
-    try {
-      const res = await axios.get(
-        "/api/invitations?type=received&status=pending",
-      );
-      setInviteCount(res.data.data.length);
-    } catch (error) {
-      console.error("Error fetching pending invitations:", error);
-    }
-  };
-
-  const handleInviteAccepted = () => {
-    fetchPendingCount();
-  };
+  }, [socket, dispatch]);
 
   return (
     <>
       <InviteNotificationBadge
-        count={inviteCount}
+        count={receivedInvitations.length}
         onClick={() => setInvitesDialogOpen(true)}
       />
       <PendingInvitesDialog
         open={invitesDialogOpen}
         onOpenChange={setInvitesDialogOpen}
-        onInviteAccepted={handleInviteAccepted}
       />
     </>
   );

@@ -11,10 +11,10 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { login } from "@/redux/features/auth/authSlice";
+import { login, clearAuthState } from "@/redux/features/auth/authSlice";
 import { loginSchema } from "@/verification/auth.verification";
 import { setUser } from "@/redux/features/auth/authSlice";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
@@ -28,10 +28,7 @@ type LoginFormState = {
   password: string;
 };
 
-export function LoginForm({
-  className,
-  ...props
-}: React.ComponentProps<"div">) {
+export function LoginForm() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const isLoading = useAppSelector((state) => state.auth.isLoading);
@@ -42,6 +39,10 @@ export function LoginForm({
   });
 
   const [errors, setErrors] = useState<Record<string, string[]>>({});
+
+  useEffect(() => {
+    dispatch(clearAuthState());
+  }, [dispatch]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

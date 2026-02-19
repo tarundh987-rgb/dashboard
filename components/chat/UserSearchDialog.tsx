@@ -24,20 +24,17 @@ import {
   Check,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import axios from "axios";
 import { ScrollArea } from "@/components/ui/scroll-area";
-
 import { useSocket } from "@/components/SocketProvider";
-
-interface User {
-  _id: string;
-  firstName?: string;
-  lastName?: string;
-  email: string;
-  image?: string;
-  inviteStatus?: string;
-  invitationId?: string;
-}
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import {
+  searchUsers,
+  sendInvitation,
+  acceptInvitation,
+  clearSearchResults,
+} from "@/redux/features/connections/connectionsSlice";
+import { createConversation } from "@/redux/features/chat/chatSlice";
+import type { User } from "@/redux/features/connections/connectionsSlice";
 
 interface UserSearchDialogProps {
   onSelectUser: (conversationId: string) => void;
@@ -52,54 +49,54 @@ export default function UserSearchDialog({
 }: UserSearchDialogProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const { socket } = useSocket();
+  const dispatch = useAppDispatch();
+  const searchResults = useAppSelector(
+    (state) => state.connections.searchResults,
+  );
+  const loading = useAppSelector((state) => state.connections.loading);
 
   useEffect(() => {
     if (open) {
-      handleSearch("");
+      dispatch(clearSearchResults());
     } else {
       setQuery("");
-      setUsers([]);
+      dispatch(clearSearchResults());
     }
-  }, [open]);
+  }, [open, dispatch]);
 
-  const handleSearch = async (value: string) => {
+  const handleSearch = (value: string) => {
     setQuery(value);
-    if (value.trim().length > 0 && value.trim().length < 2) {
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const res = await axios.get(`/api/users/search?q=${value}`);
-      setUsers(res.data.data);
-    } catch (error) {
-      console.error("Error searching users", error);
-    } finally {
-      setLoading(false);
+    if (value.trim().length > 0) {
+      dispatch(searchUsers(value));
+    } else {
+      dispatch(clearSearchResults());
     }
   };
 
   const handleStartChat = async (userId: string) => {
     setActionLoading(userId);
     try {
-      const res = await axios.post("/api/conversations", {
-        otherUserId: userId,
-      });
-      const conversationId = res.data.data._id;
-
-      if (socket) {
-        socket.emit("conversation_created", {
-          conversation: res.data.data,
+      const resultAction = await dispatch(
+        createConversation({
           otherUserId: userId,
-        });
-      }
+        }),
+      );
 
-      onSelectUser(conversationId);
-      setOpen(false);
+      if (createConversation.fulfilled.match(resultAction)) {
+        const conversation = resultAction.payload;
+
+        if (socket) {
+          socket.emit("conversation_created", {
+            conversation: conversation,
+            otherUserId: userId,
+          });
+        }
+
+        onSelectUser(conversation._id);
+        setOpen(false);
+      }
     } catch (error) {
       console.error("Failed to start conversation", error);
     } finally {
@@ -110,27 +107,19 @@ export default function UserSearchDialog({
   const handleSendInvite = async (userId: string) => {
     setActionLoading(userId);
     try {
-      const res = await axios.post("/api/invitations", {
-        receiverId: userId,
-      });
+      const resultAction = await dispatch(sendInvitation(userId));
 
-      if (socket) {
-        socket.emit("send_invite", {
-          receiverId: userId,
-          invitation: res.data.data,
-        });
+      if (sendInvitation.fulfilled.match(resultAction)) {
+        const invitation = resultAction.payload;
+        if (socket) {
+          socket.emit("send_invite", {
+            receiverId: userId,
+            invitation: invitation,
+          });
+        }
       }
-
-      setUsers((prev) =>
-        prev.map((user) =>
-          user._id === userId
-            ? { ...user, inviteStatus: "pending_sent" }
-            : user,
-        ),
-      );
     } catch (error: any) {
       console.error("Failed to send invitation", error);
-      alert(error.response?.data?.message || "Failed to send invitation");
     } finally {
       setActionLoading(null);
     }
@@ -141,20 +130,17 @@ export default function UserSearchDialog({
 
     setActionLoading(userId);
     try {
-      const res = await axios.post(`/api/invitations/${invitationId}/accept`);
+      const resultAction = await dispatch(acceptInvitation(invitationId));
 
-      if (socket) {
-        socket.emit("accept_invite", {
-          senderId: userId,
-          invitation: res.data.data,
-        });
+      if (acceptInvitation.fulfilled.match(resultAction)) {
+        if (socket) {
+          socket.emit("accept_invite", {
+            senderId: userId,
+            invitation: { _id: invitationId, sender: { _id: userId } },
+          });
+        }
+        dispatch(searchUsers(query));
       }
-
-      setUsers((prev) =>
-        prev.map((user) =>
-          user._id === userId ? { ...user, inviteStatus: "connected" } : user,
-        ),
-      );
     } catch (error) {
       console.error("Failed to accept invitation", error);
     } finally {
@@ -276,14 +262,14 @@ export default function UserSearchDialog({
               <div className="flex items-center justify-center py-4">
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
-            ) : users.length > 0 ? (
+            ) : searchResults.length > 0 ? (
               <div className="space-y-1">
                 {query.length === 0 && (
                   <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest px-1 mb-2">
                     Suggested Users
                   </p>
                 )}
-                {users.map((user) => (
+                {searchResults.map((user) => (
                   <div
                     key={user._id}
                     className="w-full flex items-center gap-3 p-2 rounded-lg border bg-card"

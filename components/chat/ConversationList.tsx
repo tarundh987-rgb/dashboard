@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import axios from "axios";
+import { useEffect } from "react";
 import { useSocket } from "@/components/SocketProvider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -9,54 +8,43 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-
-interface Conversation {
-  _id: string;
-  participants: any[];
-  lastMessage?: {
-    text: string;
-    createdAt: string;
-  };
-  updatedAt: string;
-  isGroup?: boolean;
-  name?: string;
-  groupAdmin?: string;
-}
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import {
+  fetchConversations,
+  updateConversation,
+} from "@/redux/features/chat/chatSlice";
+import type { Conversation } from "@/redux/features/chat/chatSlice";
+import Link from "next/link";
 
 interface ConversationListProps {
   selectedConversationId: string | null;
   onSelectConversation: (id: string) => void;
 }
 
-import { useAppSelector } from "@/redux/hooks";
-import Link from "next/link";
-
 export default function ConversationList({
   selectedConversationId,
   onSelectConversation,
 }: ConversationListProps) {
-  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const dispatch = useAppDispatch();
+  const conversations = useAppSelector((state) => state.chat.conversations);
   const { socket, isConnected, onlineUsers } = useSocket();
   const currentUser = useAppSelector((state) => state.auth.user);
 
   useEffect(() => {
-    fetchConversations();
-  }, []);
+    dispatch(fetchConversations());
+  }, [dispatch]);
 
   useEffect(() => {
     if (!socket || !isConnected) return;
 
-    fetchConversations();
+    dispatch(fetchConversations());
 
     const handleConversationUpdated = () => {
-      fetchConversations();
+      dispatch(fetchConversations());
     };
 
     const handleNewConversation = (conversation: Conversation) => {
-      setConversations((prev) => {
-        if (prev.some((c) => c._id === conversation._id)) return prev;
-        return [conversation, ...prev];
-      });
+      dispatch(updateConversation(conversation));
     };
 
     socket.on("conversation_updated", handleConversationUpdated);
@@ -66,16 +54,7 @@ export default function ConversationList({
       socket.off("conversation_updated", handleConversationUpdated);
       socket.off("new_conversation", handleNewConversation);
     };
-  }, [socket, isConnected]);
-
-  const fetchConversations = async () => {
-    try {
-      const res = await axios.get("/api/conversations");
-      setConversations(res.data.data);
-    } catch (error) {
-      console.error("Error fetching conversations:", error);
-    }
-  };
+  }, [socket, isConnected, dispatch]);
 
   const getOtherParticipant = (conversation: Conversation) => {
     if (!currentUser) return conversation.participants[0];

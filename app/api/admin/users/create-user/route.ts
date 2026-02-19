@@ -6,7 +6,6 @@ import User from "@/models/User";
 import { ApiError } from "@/utils/api-error";
 import { apiSuccess } from "@/utils/api-response";
 import { withApiHandler } from "@/utils/withApiHandler";
-import { registerSchema } from "@/verification/auth.verification";
 import { NextRequest } from "next/server";
 import { adminCreateUserSchema } from "@/verification/admin.verification";
 

@@ -18,19 +18,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Search, Loader2, X, Users as UsersIcon } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import axios from "axios";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useSocket } from "@/components/SocketProvider";
-
-interface User {
-  _id: string;
-  firstName?: string;
-  lastName?: string;
-  email: string;
-  image?: string;
-}
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import {
+  searchUsers,
+  clearSearchResults,
+} from "@/redux/features/connections/connectionsSlice";
+import { createConversation } from "@/redux/features/chat/chatSlice";
+import type { User } from "@/redux/features/connections/connectionsSlice";
 
 interface GroupChatModalProps {
   onSelectConversation: (conversationId: string) => void;
@@ -45,59 +43,33 @@ export default function GroupChatModal({
 }: GroupChatModalProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [users, setUsers] = useState<User[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
   const [groupName, setGroupName] = useState("");
-  const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
   const { socket } = useSocket();
+  const dispatch = useAppDispatch();
+  const searchResults = useAppSelector(
+    (state) => state.connections.searchResults,
+  );
+  const loading = useAppSelector((state) => state.connections.loading);
 
   useEffect(() => {
     if (open) {
-      handleSearch("");
+      dispatch(clearSearchResults());
     } else {
       setQuery("");
-      setUsers([]);
+      dispatch(clearSearchResults());
       setSelectedUsers([]);
       setGroupName("");
     }
-  }, [open]);
+  }, [open, dispatch]);
 
-  const handleSearch = async (value: string) => {
+  const handleSearch = (value: string) => {
     setQuery(value);
-
-    if (value.trim().length === 0) {
-      setLoading(true);
-      try {
-        const res = await axios.get("/api/connections");
-        const filteredUsers = res.data.data.filter(
-          (u: User) =>
-            !selectedUsers.some((selected) => selected._id === u._id),
-        );
-        setUsers(filteredUsers);
-      } catch (error) {
-        console.error("Error fetching connections", error);
-      } finally {
-        setLoading(false);
-      }
-      return;
-    }
-
-    if (value.trim().length < 2) {
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const res = await axios.get(`/api/users/search?q=${value}`);
-      const filteredUsers = res.data.data.filter(
-        (u: User) => !selectedUsers.some((selected) => selected._id === u._id),
-      );
-      setUsers(filteredUsers);
-    } catch (error) {
-      console.error("Error searching users", error);
-    } finally {
-      setLoading(false);
+    if (value.trim().length > 0) {
+      dispatch(searchUsers(value));
+    } else {
+      dispatch(clearSearchResults());
     }
   };
 
@@ -106,8 +78,8 @@ export default function GroupChatModal({
       setSelectedUsers(selectedUsers.filter((u) => u._id !== user._id));
     } else {
       setSelectedUsers([...selectedUsers, user]);
-      setUsers(users.filter((u) => u._id !== user._id));
       setQuery("");
+      dispatch(clearSearchResults());
     }
   };
 
@@ -121,28 +93,27 @@ export default function GroupChatModal({
 
     setCreating(true);
     try {
-      const res = await axios.post("/api/conversations", {
-        isGroup: true,
-        name: groupName,
-        members: selectedUsers.map((u) => u._id),
-      });
+      const resultAction = await dispatch(
+        createConversation({
+          isGroup: true,
+          name: groupName,
+          members: selectedUsers.map((u) => u._id),
+        }),
+      );
 
-      const conversationId = res.data.data._id;
+      if (createConversation.fulfilled.match(resultAction)) {
+        const conversation = resultAction.payload;
 
-      if (socket) {
-        socket.emit("conversation_created", {
-          conversation: res.data.data,
-          participantIds: selectedUsers.map((u) => u._id),
-        });
+        if (socket) {
+          socket.emit("conversation_created", {
+            conversation: conversation,
+            participantIds: selectedUsers.map((u) => u._id),
+          });
+        }
+
+        onSelectConversation(conversation._id);
+        setOpen(false);
       }
-
-      onSelectConversation(conversationId);
-      setOpen(false);
-
-      setGroupName("");
-      setSelectedUsers([]);
-      setQuery("");
-      setUsers([]);
     } catch (error) {
       console.error("Failed to create group", error);
     } finally {
@@ -201,7 +172,7 @@ export default function GroupChatModal({
                 <Badge
                   key={user._id}
                   variant="secondary"
-                  className="flex items-center gap-1"
+                  className="shrink-0 flex items-center gap-1"
                 >
                   {user.firstName}
                   <button
@@ -230,36 +201,48 @@ export default function GroupChatModal({
               <div className="flex items-center justify-center py-4">
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
-            ) : users.length > 0 ? (
+            ) : searchResults.length > 0 ? (
               <div className="space-y-1">
-                {query.length === 0 && (
-                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest px-1 mb-2">
-                    Your Connections
+                {searchResults
+                  .filter(
+                    (user) =>
+                      !selectedUsers.some(
+                        (selected) => selected._id === user._id,
+                      ),
+                  )
+                  .map((user) => (
+                    <button
+                      key={user._id}
+                      onClick={() => toggleUser(user)}
+                      className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-muted transition-colors text-left"
+                    >
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={user.image} />
+                        <AvatarFallback>
+                          {user.firstName ? user.firstName[0] : user.email[0]}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium">
+                          {user.firstName} {user.lastName}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {user.email}
+                        </p>
+                      </div>
+                      <Plus className="h-4 w-4 text-muted-foreground" />
+                    </button>
+                  ))}
+                {searchResults.filter(
+                  (user) =>
+                    !selectedUsers.some(
+                      (selected) => selected._id === user._id,
+                    ),
+                ).length === 0 && (
+                  <p className="text-center text-sm text-muted-foreground">
+                    No new users found.
                   </p>
                 )}
-                {users.map((user) => (
-                  <button
-                    key={user._id}
-                    onClick={() => toggleUser(user)}
-                    className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-muted transition-colors text-left"
-                  >
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={user.image} />
-                      <AvatarFallback>
-                        {user.firstName ? user.firstName[0] : user.email[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium">
-                        {user.firstName} {user.lastName}
-                      </p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {user.email}
-                      </p>
-                    </div>
-                    <Plus className="h-4 w-4 text-muted-foreground" />
-                  </button>
-                ))}
               </div>
             ) : query.length >= 2 ? (
               <p className="text-center text-sm text-muted-foreground py-4">

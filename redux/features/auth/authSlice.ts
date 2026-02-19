@@ -359,6 +359,7 @@ const authSlice = createSlice({
       })
       .addCase(me.rejected, (state, action) => {
         state.isLoading = false;
+        state.user = null;
         state.error = action.payload?.message || null;
       })
       .addCase(logout.pending, (state) => {

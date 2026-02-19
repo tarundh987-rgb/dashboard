@@ -12,10 +12,10 @@ import {
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import DobPicker from "./DobPicker";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { calculateAge } from "@/utils/ageCalculator";
 import { Textarea } from "./ui/textarea";
-import { register } from "@/redux/features/auth/authSlice";
+import { register, clearAuthState } from "@/redux/features/auth/authSlice";
 import { registerSchema } from "@/verification/auth.verification";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -35,13 +35,14 @@ type SignupFormState = {
   dob?: Date;
 };
 
-export function SignupForm({
-  className,
-  ...props
-}: React.ComponentProps<"div">) {
+export function SignupForm() {
   const dispatch = useAppDispatch();
   const isLoading = useAppSelector((state) => state.auth.isLoading);
   const [errors, setErrors] = useState<Record<string, string[]>>({});
+
+  useEffect(() => {
+    dispatch(clearAuthState());
+  }, [dispatch]);
   const router = useRouter();
 
   const [formData, setFormData] = useState<SignupFormState>({

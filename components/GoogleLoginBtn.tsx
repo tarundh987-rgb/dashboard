@@ -21,10 +21,8 @@ export default function GoogleLoginBtn() {
             googleLogin({ token: res.credential }),
           ).unwrap();
 
-          // Extract user data from response
           const userData = response.data || response;
 
-          // Dispatch setUser to store user data
           dispatch(setUser(userData));
 
           toast.success("Logged in successfully");

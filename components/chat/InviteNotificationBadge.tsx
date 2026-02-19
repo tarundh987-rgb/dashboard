@@ -1,4 +1,3 @@
-"use client";
 import { Button } from "@/components/ui/button";
 import { Bell } from "lucide-react";
 import { Badge } from "@/components/ui/badge";

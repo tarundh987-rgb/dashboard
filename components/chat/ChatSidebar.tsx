@@ -38,7 +38,6 @@ export function ChatSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const selectedConversationId = useSelector(
     (state: RootState) => state.chat.selectedConversationId,
   );
-  const currentUser = useSelector((state: RootState) => state.auth.user);
   const { isMobile, setOpenMobile } = useSidebar();
 
   const handleSelectConversation = (id: string) => {
